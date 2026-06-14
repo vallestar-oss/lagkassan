@@ -28,7 +28,9 @@ export type Database = {
           email?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
+
       teams: {
         Row: {
           id: string;
@@ -48,7 +50,9 @@ export type Database = {
           description?: string | null;
           created_at?: string;
         };
+        Relationships: [];
       };
+
       team_members: {
         Row: {
           id: string;
@@ -71,7 +75,24 @@ export type Database = {
           role?: "owner" | "treasurer" | "member";
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "team_members_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "team_members_user_id_fkey";
+            columns: ["user_id"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
+
       collections: {
         Row: {
           id: string;
@@ -93,7 +114,7 @@ export type Database = {
           description?: string | null;
           amount: number;
           deadline?: string | null;
-          slug: string;
+          slug?: string;
           status?: "active" | "closed" | "draft";
           created_at?: string;
         };
@@ -109,7 +130,24 @@ export type Database = {
           status?: "active" | "closed" | "draft";
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "collections_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "collections_created_by_fkey";
+            columns: ["created_by"];
+            isOneToOne: false;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
       };
+
       collection_members: {
         Row: {
           id: string;
@@ -132,7 +170,17 @@ export type Database = {
           email?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "collection_members_collection_id_fkey";
+            columns: ["collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["id"];
+          },
+        ];
       };
+
       payments: {
         Row: {
           id: string;
@@ -173,6 +221,22 @@ export type Database = {
           paid_at?: string | null;
           created_at?: string;
         };
+        Relationships: [
+          {
+            foreignKeyName: "payments_collection_id_fkey";
+            columns: ["collection_id"];
+            isOneToOne: false;
+            referencedRelation: "collections";
+            referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "payments_collection_member_id_fkey";
+            columns: ["collection_member_id"];
+            isOneToOne: false;
+            referencedRelation: "collection_members";
+            referencedColumns: ["id"];
+          },
+        ];
       };
     };
     Views: { [_ in never]: never };
