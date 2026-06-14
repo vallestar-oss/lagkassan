@@ -1,26 +1,68 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
+/* ─── DESIGN.md token map ─────────────────────────────────────────────────── */
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  /* Fonts */
+  --font-sans: var(--font-inter);
+  --font-mono: var(--font-jetbrains-mono);
+
+  /* Surfaces */
+  --color-surface:        #FAFAF8;
+  --color-surface-alt:    #F2F1EE;
+  --color-surface-border: #E5E3DF;
+
+  /* Text */
+  --color-text-primary: #1A1917;
+  --color-text-muted:   #6B6860;
+
+  /* Accent (one accent, used sparingly) */
+  --color-accent:       #1D6EE8;
+  --color-accent-hover: #1558C4;
+  --color-accent-light: #EFF4FD;
+
+  /* Semantic */
+  --color-success:       #16A34A;
+  --color-success-light: #F0FDF4;
+  --color-warning:       #D97706;
+  --color-danger:        #DC2626;
+  --color-danger-light:  #FEF2F2;
+
+  /* Spacing scale (multiples of base 4px unit) */
+  --spacing-section: 96px;
+  --spacing-card:    24px;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+/* ─── Base ───────────────────────────────────────────────────────────────── */
+:root {
+  color-scheme: light;
+}
+
+html {
+  background-color: #FAFAF8;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #FAFAF8;
+  color: #1A1917;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ─── Typography helpers ─────────────────────────────────────────────────── */
+/* Amounts always in mono — use class="font-mono" on SEK figures */
+
+/* Max reading width constraint (apply with max-w-prose override if needed) */
+.prose-reading {
+  max-width: 680px;
+}
+
+/* ─── Card shadow (single permitted shadow level) ────────────────────────── */
+.shadow-card {
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+/* ─── Focus ring (accent color) ─────────────────────────────────────────── */
+*:focus-visible {
+  outline: 2px solid #EFF4FD;
+  outline-offset: 2px;
 }
