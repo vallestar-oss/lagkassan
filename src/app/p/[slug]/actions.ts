@@ -66,7 +66,9 @@ export async function submitMockPayment(
 
   const amount = collection.amount;
 
-  // Server-side double-payment guard: if this member already paid, reject.
+  // Fast-path double-payment guard: if this member already paid, reject early.
+  // This is just a UX optimization — the real guard against the race is the
+  // partial unique index idx_one_paid_per_member (handled on insert below).
   if (collectionMemberId) {
     const { data: member } = await supabase
       .from("collection_members")
@@ -94,7 +96,13 @@ export async function submitMockPayment(
     paid_at: new Date().toISOString(),
   });
 
-  if (error) return { error: "Kunde inte registrera betalningen. Försök igen.", success: false };
+  if (error) {
+    // 23505 = unique_violation from idx_one_paid_per_member: another payment
+    // for this member won the race. Treat as "already paid", not a failure.
+    if (error.code === "23505")
+      return { error: "Den här personen har redan betalat.", success: false };
+    return { error: "Kunde inte registrera betalningen. Försök igen.", success: false };
+  }
 
   return { error: null, success: true };
 }

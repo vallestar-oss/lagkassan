@@ -87,10 +87,22 @@ export async function markMemberPaid(
   memberId: string,
   memberName: string,
   collectionId: string,
-) {
+): Promise<{ error: string | null }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
+  if (!user) return { error: "Inte inloggad." };
+
+  // Fast-path: if already paid, there's nothing to do. The real guard against
+  // the race is the partial unique index idx_one_paid_per_member (below).
+  const { data: member } = await supabase
+    .from("collection_members")
+    .select("status")
+    .eq("id", memberId)
+    .single();
+  if (member?.status === "paid") {
+    revalidatePath(`/collections/${collectionId}`);
+    return { error: "Personen har redan betalat." };
+  }
 
   const { data: col } = await supabase
     .from("collections")
@@ -98,9 +110,9 @@ export async function markMemberPaid(
     .eq("id", collectionId)
     .single();
 
-  if (!col) return;
+  if (!col) return { error: "Förfrågan hittades inte." };
 
-  await supabase.from("payments").insert({
+  const { error } = await supabase.from("payments").insert({
     collection_id: collectionId,
     collection_member_id: memberId,
     payer_name: memberName,
@@ -110,7 +122,14 @@ export async function markMemberPaid(
     paid_at: new Date().toISOString(),
   });
 
+  // 23505 = unique_violation from idx_one_paid_per_member: a payment for this
+  // member already exists (e.g. the payer paid concurrently). The member is
+  // already paid, so surface a friendly message instead of a 500.
+  if (error && error.code !== "23505")
+    return { error: "Kunde inte registrera betalningen. Försök igen." };
+
   revalidatePath(`/collections/${collectionId}`);
+  return { error: error?.code === "23505" ? "Personen har redan betalat." : null };
 }
 
 // Close or re-open a collection
