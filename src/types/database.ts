@@ -154,6 +154,7 @@ export type Database = {
           collection_id: string;
           name: string;
           email: string | null;
+          status: "pending" | "paid";
           created_at: string;
         };
         Insert: {
@@ -161,6 +162,7 @@ export type Database = {
           collection_id: string;
           name: string;
           email?: string | null;
+          status?: "pending" | "paid";
           created_at?: string;
         };
         Update: {
@@ -168,6 +170,7 @@ export type Database = {
           collection_id?: string;
           name?: string;
           email?: string | null;
+          status?: "pending" | "paid";
           created_at?: string;
         };
         Relationships: [
@@ -176,6 +179,39 @@ export type Database = {
             columns: ["collection_id"];
             isOneToOne: false;
             referencedRelation: "collections";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
+
+      roster_members: {
+        Row: {
+          id: string;
+          team_id: string;
+          name: string;
+          phone: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          team_id: string;
+          name: string;
+          phone?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          team_id?: string;
+          name?: string;
+          phone?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "roster_members_team_id_fkey";
+            columns: ["team_id"];
+            isOneToOne: false;
+            referencedRelation: "teams";
             referencedColumns: ["id"];
           },
         ];

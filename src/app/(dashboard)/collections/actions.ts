@@ -44,6 +44,25 @@ export async function createCollection(
 
   if (error || !collection) return { error: error?.message ?? "Kunde inte skapa förfrågan." };
 
+  // Copy selected roster names + any extra names into collection_members.
+  // If none are selected the collection is created without members (fallback
+  // to free-form payment page — see /p/[slug]).
+  const memberNames = formData.getAll("member_name") as string[];
+  const extraNames = (formData.getAll("extra_name") as string[])
+    .map((n) => n.trim())
+    .filter(Boolean);
+  const allNames = [...memberNames, ...extraNames];
+
+  if (allNames.length > 0) {
+    await supabase.from("collection_members").insert(
+      allNames.map((name) => ({
+        collection_id: collection.id,
+        name,
+        status: "pending",
+      })),
+    );
+  }
+
   redirect(`/collections/${collection.id}`);
 }
 
@@ -57,6 +76,39 @@ export async function markPaid(paymentId: string, collectionId: string) {
     .from("payments")
     .update({ status: "paid", paid_at: new Date().toISOString() })
     .eq("id", paymentId);
+
+  revalidatePath(`/collections/${collectionId}`);
+}
+
+// Treasurer marks a roster member as paid manually (cash / bank transfer).
+// Inserts a payments row so the SECURITY DEFINER trigger flips the member
+// status to 'paid' — no direct UPDATE policy needed on collection_members.
+export async function markMemberPaid(
+  memberId: string,
+  memberName: string,
+  collectionId: string,
+) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const { data: col } = await supabase
+    .from("collections")
+    .select("amount")
+    .eq("id", collectionId)
+    .single();
+
+  if (!col) return;
+
+  await supabase.from("payments").insert({
+    collection_id: collectionId,
+    collection_member_id: memberId,
+    payer_name: memberName,
+    amount: col.amount,
+    status: "paid",
+    payment_method: "manual",
+    paid_at: new Date().toISOString(),
+  });
 
   revalidatePath(`/collections/${collectionId}`);
 }

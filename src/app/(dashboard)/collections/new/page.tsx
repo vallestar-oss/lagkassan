@@ -16,10 +16,23 @@ export default async function NewCollectionPage() {
 
   if (!memberships?.length) redirect("/teams/new");
 
-  // Extract teams, filtering out any null joins.
   const teams = memberships
     .map((m) => m.teams as { id: string; name: string } | null)
     .filter((t): t is { id: string; name: string } => t !== null);
+
+  // Load roster members for every eligible team, grouped by team_id.
+  const teamIds = teams.map((t) => t.id);
+  const { data: rosterRows } = await supabase
+    .from("roster_members")
+    .select("id, name, team_id")
+    .in("team_id", teamIds)
+    .order("name", { ascending: true });
+
+  const rosterByTeam: Record<string, { id: string; name: string }[]> = {};
+  for (const r of rosterRows ?? []) {
+    if (!rosterByTeam[r.team_id]) rosterByTeam[r.team_id] = [];
+    rosterByTeam[r.team_id].push({ id: r.id, name: r.name });
+  }
 
   return (
     <div className="max-w-lg">
@@ -31,7 +44,7 @@ export default async function NewCollectionPage() {
           Skapa en länk du kan dela med dina medlemmar.
         </p>
       </div>
-      <CollectionForm teams={teams} />
+      <CollectionForm teams={teams} rosterByTeam={rosterByTeam} />
     </div>
   );
 }

@@ -48,12 +48,22 @@ async function getPageData(): Promise<{
     .order("created_at", { ascending: false });
 
   const collectionIds = (rawCollections ?? []).map((c) => c.id);
-  const { data: payments } = collectionIds.length
-    ? await supabase
-        .from("payments")
-        .select("collection_id, status")
-        .in("collection_id", collectionIds)
-    : { data: [] };
+
+  const [{ data: payments }, { data: memberRows }] = await Promise.all([
+    collectionIds.length
+      ? supabase
+          .from("payments")
+          .select("collection_id, status")
+          .in("collection_id", collectionIds)
+      : { data: [] },
+    collectionIds.length
+      ? supabase
+          .from("collection_members")
+          .select("collection_id, status")
+          .in("collection_id", collectionIds)
+          .returns<{ collection_id: string; status: string }[]>()
+      : { data: [] as { collection_id: string; status: string }[] },
+  ]);
 
   const paymentMap: Record<string, { paid: number; total: number }> = {};
   for (const p of payments ?? []) {
@@ -62,17 +72,28 @@ async function getPageData(): Promise<{
     if (p.status === "paid") paymentMap[p.collection_id].paid++;
   }
 
-  const collections = (rawCollections ?? []).map((c) => ({
-    id: c.id,
-    title: c.title,
-    amount: c.amount,
-    deadline: c.deadline,
-    status: c.status,
-    slug: c.slug,
-    team_name: (c.teams as { name: string } | null)?.name ?? "",
-    paid_count: paymentMap[c.id]?.paid ?? 0,
-    total_count: paymentMap[c.id]?.total ?? 0,
-  }));
+  const memberMap: Record<string, { paid: number; total: number }> = {};
+  for (const m of memberRows ?? []) {
+    if (!memberMap[m.collection_id]) memberMap[m.collection_id] = { paid: 0, total: 0 };
+    memberMap[m.collection_id].total++;
+    if (m.status === "paid") memberMap[m.collection_id].paid++;
+  }
+
+  const collections = (rawCollections ?? []).map((c) => {
+    // Prefer collection_members counts for rostered collections.
+    const counts = memberMap[c.id]?.total ? memberMap[c.id] : (paymentMap[c.id] ?? { paid: 0, total: 0 });
+    return {
+      id: c.id,
+      title: c.title,
+      amount: c.amount,
+      deadline: c.deadline,
+      status: c.status,
+      slug: c.slug,
+      team_name: (c.teams as { name: string } | null)?.name ?? "",
+      paid_count: counts.paid,
+      total_count: counts.total,
+    };
+  });
 
   return { profile: profileRes.data, teams, collections };
 }
@@ -110,7 +131,24 @@ export default async function DashboardPage() {
             Välkommen, {firstName}!
           </h1>
           <p className="text-sm text-text-muted mt-0.5">
-            {data.teams.map((t) => t.name).join(" · ")}
+            {data.teams.map((t, i) => (
+              <span key={t.id}>
+                {i > 0 && " · "}
+                <Link
+                  href={`/teams/${t.id}`}
+                  className="hover:text-accent hover:underline transition-colors"
+                >
+                  {t.name}
+                </Link>
+              </span>
+            ))}
+            <span className="text-text-muted"> · </span>
+            <Link
+              href={`/teams/${data.teams[0].id}`}
+              className="text-accent hover:underline"
+            >
+              Hantera medlemmar
+            </Link>
           </p>
         </div>
         <Link

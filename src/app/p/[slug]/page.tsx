@@ -1,7 +1,9 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
 import { PaymentForm } from "./PaymentForm";
+import { RosterPaymentFlow } from "./RosterPaymentFlow";
 
 export default async function PublicPaymentPage({
   params,
@@ -11,23 +13,46 @@ export default async function PublicPaymentPage({
   const { slug } = await params;
   const supabase = await createClient();
 
+  // Anon users can read active collections, but NOT the teams join (RLS
+  // requires team membership). Fetch collection without the join, then fetch
+  // team name via the service-role admin client which bypasses RLS.
   const { data: collection } = await supabase
     .from("collections")
-    .select("*, teams(name)")
+    .select("*")
     .eq("slug", slug)
     .eq("status", "active")
     .single();
 
   if (!collection) notFound();
 
-  const { data: payments } = await supabase
-    .from("payments")
-    .select("payer_name, status")
-    .eq("collection_id", collection.id)
-    .eq("status", "paid");
+  const admin = createAdminClient();
+  const [teamRes, memberRowsRes, paidCountRes] = await Promise.all([
+    admin.from("teams").select("name").eq("id", collection.team_id).single(),
 
-  const paidCount = payments?.length ?? 0;
-  const teamName = (collection.teams as { name: string } | null)?.name ?? "";
+    // Load roster for this collection. The public RLS policy allows anon reads
+    // for active collections — no auth needed.
+    supabase
+      .from("collection_members")
+      .select("id, name, status")
+      .eq("collection_id", collection.id)
+      .order("name", { ascending: true })
+      .returns<{ id: string; name: string; status: string }[]>(),
+
+    supabase
+      .from("payments")
+      .select("id", { count: "exact", head: true })
+      .eq("collection_id", collection.id)
+      .eq("status", "paid"),
+  ]);
+
+  const teamName = teamRes.data?.name ?? "";
+  const members = memberRowsRes.data ?? [];
+  const hasRoster = members.length > 0;
+
+  // Only used in the free-form fallback header ("N har redan betalt").
+  const paidCount = hasRoster
+    ? members.filter((m) => m.status === "paid").length
+    : paidCountRes.count ?? 0;
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -64,18 +89,26 @@ export default async function PublicPaymentPage({
               </div>
             )}
           </div>
-          {paidCount > 0 && (
+          {!hasRoster && paidCount > 0 && (
             <p className="text-xs text-text-muted mt-3">
               {paidCount} {paidCount === 1 ? "person har" : "personer har"} redan betalt.
             </p>
           )}
         </div>
 
-        {/* Payment form */}
-        <PaymentForm
-          collectionId={collection.id}
-          amount={collection.amount}
-        />
+        {/* Payment: roster flow (member list) or free-form fallback */}
+        {hasRoster ? (
+          <RosterPaymentFlow
+            collectionId={collection.id}
+            amount={collection.amount}
+            members={members}
+          />
+        ) : (
+          <PaymentForm
+            collectionId={collection.id}
+            amount={collection.amount}
+          />
+        )}
 
         <p className="text-xs text-text-muted text-center">
           Betalar du via Lagkassan delar vi din e-postadress med kassören för kvitto.

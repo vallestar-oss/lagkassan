@@ -14,6 +14,7 @@ export async function submitMockPayment(
   const amountRaw = formData.get("amount");
   const payerName = (formData.get("payer_name") as string | null)?.trim() ?? "";
   const payerEmail = (formData.get("payer_email") as string | null)?.trim() || null;
+  const collectionMemberId = (formData.get("collection_member_id") as string | null) || null;
 
   if (!payerName) return { error: "Ange ditt namn.", success: false };
   if (!collectionId) return { error: "Ogiltig förfrågan.", success: false };
@@ -31,10 +32,23 @@ export async function submitMockPayment(
   if (!collection || collection.status !== "active")
     return { error: "Den här betalningsförfrågan är inte längre aktiv.", success: false };
 
+  // Server-side double-payment guard: if this member already paid, reject.
+  if (collectionMemberId) {
+    const { data: member } = await supabase
+      .from("collection_members")
+      .select("status")
+      .eq("id", collectionMemberId)
+      .single();
+    if (member?.status === "paid")
+      return { error: "Den här personen har redan betalat.", success: false };
+  }
+
   // Mock: write a payment row directly as "paid" (no Stripe yet).
-  // When Stripe is connected, this becomes: create PaymentIntent → redirect → webhook marks paid.
+  // The SECURITY DEFINER trigger on payments flips the linked
+  // collection_member's status to 'paid' automatically.
   const { error } = await supabase.from("payments").insert({
     collection_id: collectionId,
+    collection_member_id: collectionMemberId,
     payer_name: payerName,
     payer_email: payerEmail,
     amount,

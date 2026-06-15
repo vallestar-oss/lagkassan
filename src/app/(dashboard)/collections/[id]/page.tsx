@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
-import { markPaid, setCollectionStatus } from "../actions";
+import { markPaid, markMemberPaid, setCollectionStatus } from "../actions";
 import { CopyButton } from "./CopyButton";
 
 export default async function CollectionDetailPage({
@@ -33,18 +33,40 @@ export default async function CollectionDetailPage({
 
   if (!membership) notFound();
 
-  const { data: payments } = await supabase
-    .from("payments")
-    .select("*")
+  // Load roster members — if any exist, they are the source of truth for stats.
+  // .returns<> is needed because the generated types predate the status column.
+  const { data: memberRows } = await supabase
+    .from("collection_members")
+    .select("id, name, status")
     .eq("collection_id", id)
-    .order("created_at", { ascending: false });
+    .order("name", { ascending: true })
+    .returns<{ id: string; name: string; status: string }[]>();
 
-  const paymentList = payments ?? [];
-  const paidCount = paymentList.filter((p) => p.status === "paid").length;
-  const totalCount = paymentList.length;
-  const paidAmount = paymentList
-    .filter((p) => p.status === "paid")
-    .reduce((sum, p) => sum + p.amount, 0);
+  const rosterMembers = memberRows ?? [];
+  const hasRoster = rosterMembers.length > 0;
+
+  // Only load payments when there's no roster (free-form collections).
+  const paymentList = hasRoster
+    ? []
+    : (
+        await supabase
+          .from("payments")
+          .select("*")
+          .eq("collection_id", id)
+          .order("created_at", { ascending: false })
+      ).data ?? [];
+
+  const paidCount = hasRoster
+    ? rosterMembers.filter((m) => m.status === "paid").length
+    : paymentList.filter((p) => p.status === "paid").length;
+
+  const totalCount = hasRoster ? rosterMembers.length : paymentList.length;
+
+  const paidAmount = hasRoster
+    ? paidCount * collection.amount
+    : paymentList
+        .filter((p) => p.status === "paid")
+        .reduce((sum, p) => sum + p.amount, 0);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const shareUrl = `${appUrl}/p/${collection.slug}`;
@@ -128,16 +150,63 @@ export default async function CollectionDetailPage({
         ))}
       </div>
 
-      {/* Payment list */}
+      {/* Member / payment list */}
       <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
         <div className="px-5 py-3 border-b border-surface-border flex items-center justify-between">
-          <p className="text-sm font-semibold text-text-primary">Betalningar</p>
+          <p className="text-sm font-semibold text-text-primary">
+            {hasRoster ? "Deltagare" : "Betalningar"}
+          </p>
           <span className="text-xs text-text-muted">
             {collection.status === "active" ? "Aktiv" : "Stängd"}
           </span>
         </div>
 
-        {paymentList.length === 0 ? (
+        {hasRoster ? (
+          /* Roster-based: one row per expected payer */
+          rosterMembers.length === 0 ? null : (
+            <ul className="divide-y divide-surface-border">
+              {rosterMembers.map((member) => (
+                <li
+                  key={member.id}
+                  className="flex items-center justify-between px-5 py-3 gap-3"
+                >
+                  <p className="text-sm font-medium text-text-primary flex-1 min-w-0 truncate">
+                    {member.name}
+                  </p>
+                  <div className="flex items-center gap-3 flex-shrink-0">
+                    <span className="font-mono text-sm text-text-muted">
+                      {formatOre(collection.amount)}
+                    </span>
+                    {member.status === "paid" ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-success-light text-success">
+                        Betald
+                      </span>
+                    ) : canEdit ? (
+                      <form
+                        action={async () => {
+                          "use server";
+                          await markMemberPaid(member.id, member.name, id);
+                        }}
+                      >
+                        <button
+                          type="submit"
+                          className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
+                        >
+                          Markera betald
+                        </button>
+                      </form>
+                    ) : (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-surface-alt text-text-muted">
+                        Väntar
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )
+        ) : /* Free-form: show individual payment rows */
+        paymentList.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="text-sm text-text-muted">
               Inga betalningar än. Dela länken ovan för att komma igång.
