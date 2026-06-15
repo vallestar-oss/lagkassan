@@ -62,41 +62,26 @@ export function RosterPaymentFlow({
         </div>
         <ul className="divide-y divide-surface-border">
           {members.map((m) => {
-            const isPaid = m.status === "paid";
             const isSelected = m.id === selectedId;
             return (
               <li key={m.id}>
                 <button
                   type="button"
-                  disabled={isPaid}
                   onClick={() => setSelectedId(isSelected ? null : m.id)}
                   className={`w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors ${
-                    isPaid
-                      ? "cursor-not-allowed"
-                      : isSelected
-                      ? "bg-accent-light"
-                      : "hover:bg-surface cursor-pointer"
+                    isSelected ? "bg-accent-light" : "hover:bg-surface cursor-pointer"
                   }`}
                 >
                   <span
                     className={`text-sm font-medium ${
-                      isPaid
-                        ? "text-text-muted line-through"
-                        : isSelected
-                        ? "text-accent"
-                        : "text-text-primary"
+                      isSelected ? "text-accent" : "text-text-primary"
                     }`}
                   >
                     {abbreviateName(m.name)}
                   </span>
-                  {isPaid ? (
-                    <span className="flex items-center gap-1 text-xs font-medium text-success">
-                      <IconCheck className="w-3.5 h-3.5" />
-                      Betald
-                    </span>
-                  ) : isSelected ? (
+                  {isSelected && (
                     <span className="text-xs font-medium text-accent">Vald ↓</span>
-                  ) : null}
+                  )}
                 </button>
               </li>
             );
@@ -104,54 +89,65 @@ export function RosterPaymentFlow({
         </ul>
       </div>
 
-      {/* Payment confirmation — appears when a name is selected */}
+      {/* Panel — appears when a name is selected */}
       {selectedMember && (
-        <form
-          action={action}
-          className="bg-white border border-accent/30 rounded-lg p-5 shadow-card flex flex-col gap-4"
-        >
-          <p className="text-sm font-semibold text-text-primary">
-            Bekräfta betalning för{" "}
-            <span className="text-accent">{abbreviateName(selectedMember.name)}</span>
-          </p>
-
-          {state.error && (
-            <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-              {state.error}
+        selectedMember.status === "paid" ? (
+          <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-2">
+            <p className="text-sm font-semibold text-text-primary">
+              {abbreviateName(selectedMember.name)} har redan betalat.
             </p>
-          )}
-
-          <input type="hidden" name="collection_id" value={collectionId} />
-          <input type="hidden" name="amount" value={amount} />
-          <input type="hidden" name="payer_name" value={selectedMember.name} />
-          <input type="hidden" name="collection_member_id" value={selectedMember.id} />
-
-          <label className="flex flex-col gap-1.5">
-            <span className="text-sm font-medium text-text-primary">
-              E-postadress{" "}
-              <span className="text-text-muted font-normal">(valfritt, för kvitto)</span>
-            </span>
-            <input
-              name="payer_email"
-              type="email"
-              autoComplete="email"
-              placeholder="din@email.se"
-              className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full bg-accent text-white font-semibold py-3 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            <p className="text-sm text-text-muted">
+              Inget mer att göra — kassören ser betalningen.
+            </p>
+          </div>
+        ) : (
+          <form
+            action={action}
+            className="bg-white border border-accent/30 rounded-lg p-5 shadow-card flex flex-col gap-4"
           >
-            {isPending ? "Behandlar…" : `Betala ${formatOre(amount)}`}
-          </button>
+            <p className="text-sm font-semibold text-text-primary">
+              Bekräfta betalning för{" "}
+              <span className="text-accent">{abbreviateName(selectedMember.name)}</span>
+            </p>
 
-          <p className="text-xs text-center text-text-muted">
-            🔒 Simulerad betalning — inga riktiga kortuppgifter krävs ännu
-          </p>
-        </form>
+            {state.error && (
+              <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
+                {state.error}
+              </p>
+            )}
+
+            <input type="hidden" name="collection_id" value={collectionId} />
+            <input type="hidden" name="amount" value={amount} />
+            <input type="hidden" name="payer_name" value={selectedMember.name} />
+            <input type="hidden" name="collection_member_id" value={selectedMember.id} />
+
+            <label className="flex flex-col gap-1.5">
+              <span className="text-sm font-medium text-text-primary">
+                E-postadress{" "}
+                <span className="text-text-muted font-normal">(valfritt, för kvitto)</span>
+              </span>
+              <input
+                name="payer_email"
+                type="email"
+                autoComplete="email"
+                placeholder="din@email.se"
+                className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+              />
+            </label>
+
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full bg-accent text-white font-semibold py-3 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {isPending ? "Behandlar…" : `Betala ${formatOre(amount)}`}
+            </button>
+
+            <p className="text-xs text-center text-text-muted">
+              🔒 Simulerad betalning — inga riktiga kortuppgifter krävs ännu
+            </p>
+          </form>
+        )
       )}
     </div>
   );
