@@ -16,12 +16,14 @@ export default async function PublicPaymentPage({
   // Anon users can read active collections, but NOT the teams join (RLS
   // requires team membership). Fetch collection without the join, then fetch
   // team name via the service-role admin client which bypasses RLS.
-  const { data: collection } = await supabase
+  const { data: collection, error: collectionError } = await supabase
     .from("collections")
     .select("*")
     .eq("slug", slug)
     .eq("status", "active")
     .single();
+
+  console.log("[p/slug] slug:", slug, "collection:", collection?.id ?? null, "error:", collectionError?.message ?? null, "code:", collectionError?.code ?? null);
 
   if (!collection) notFound();
 
