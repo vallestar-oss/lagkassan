@@ -117,7 +117,8 @@ export function RosterPaymentFlow({
             )}
 
             <input type="hidden" name="collection_id" value={collectionId} />
-            <input type="hidden" name="amount" value={amount} />
+            {/* amount is intentionally NOT submitted — the server reads it from
+                the DB (collections.amount), never the client. */}
             <input type="hidden" name="payer_name" value={selectedMember.name} />
             <input type="hidden" name="collection_member_id" value={selectedMember.id} />
 

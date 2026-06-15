@@ -47,7 +47,8 @@ export function PaymentForm({
       )}
 
       <input type="hidden" name="collection_id" value={collectionId} />
-      <input type="hidden" name="amount" value={amount} />
+      {/* amount is intentionally NOT submitted — the server reads it from the
+          DB (collections.amount), never the client. */}
 
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-primary">Ditt namn</span>
