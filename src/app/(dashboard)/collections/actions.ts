@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { assertTeamRole, assertCollectionRole } from "@/lib/auth";
 import { parseSekToOre } from "@/lib/utils";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
@@ -12,10 +13,16 @@ export async function createCollection(
   formData: FormData,
 ): Promise<CollectionState> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Inte inloggad." };
 
   const teamId = (formData.get("team_id") as string | null) ?? "";
+
+  // Defense-in-depth: only owners/treasurers of this team may create collections.
+  const { user, error: authError } = await assertTeamRole(supabase, teamId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError || !user) return { error: authError };
+
   const title = (formData.get("title") as string | null)?.trim() ?? "";
   const description = (formData.get("description") as string | null)?.trim() ?? "";
   const amountStr = (formData.get("amount") as string | null) ?? "";
@@ -67,17 +74,29 @@ export async function createCollection(
 }
 
 // Treasurer manually marks a payment as paid (cash, bank transfer, etc.)
-export async function markPaid(paymentId: string, collectionId: string) {
+export async function markPaid(
+  paymentId: string,
+  collectionId: string,
+): Promise<{ error: string | null }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return;
 
-  await supabase
+  // Defense-in-depth: the payments RLS is permissive (public insert), so verify
+  // the caller is an owner/treasurer of this collection's team before writing.
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError };
+
+  const { error } = await supabase
     .from("payments")
     .update({ status: "paid", paid_at: new Date().toISOString() })
     .eq("id", paymentId);
 
+  if (error) return { error: "Kunde inte uppdatera betalningen. Försök igen." };
+
   revalidatePath(`/collections/${collectionId}`);
+  return { error: null };
 }
 
 // Treasurer marks a roster member as paid manually (cash / bank transfer).
@@ -89,8 +108,15 @@ export async function markMemberPaid(
   collectionId: string,
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Inte inloggad." };
+
+  // Defense-in-depth: the payments RLS allows public inserts, so verify the
+  // caller is an owner/treasurer of this collection's team before inserting a
+  // manual 'paid' payment on a member's behalf.
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError };
 
   // Fast-path: if already paid, there's nothing to do. The real guard against
   // the race is the partial unique index idx_one_paid_per_member (below).
@@ -136,8 +162,23 @@ export async function markMemberPaid(
 export async function setCollectionStatus(
   collectionId: string,
   status: "active" | "closed",
-) {
+): Promise<{ error: string | null }> {
   const supabase = await createClient();
-  await supabase.from("collections").update({ status }).eq("id", collectionId);
+
+  // Defense-in-depth: only owners/treasurers of this collection's team.
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError };
+
+  const { error } = await supabase
+    .from("collections")
+    .update({ status })
+    .eq("id", collectionId);
+
+  if (error) return { error: "Kunde inte uppdatera förfrågan. Försök igen." };
+
   revalidatePath(`/collections/${collectionId}`);
+  return { error: null };
 }
