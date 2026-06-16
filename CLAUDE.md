@@ -1,5 +1,14 @@
 @AGENTS.md
 
+## Database schema
+
+The schema lives **only** in `supabase/migrations/*.sql`, applied in filename
+order. That is the single source of truth — there is no `schema.sql` snapshot
+(it was deleted because it drifted out of sync). To understand the current
+schema, read the migrations in order; the latest state is the sum of all of
+them. When changing the schema, add a new timestamped migration — never edit an
+applied one.
+
 ## Test account
 
 Use this account for all browser/preview testing. Never ask the user for their personal credentials.
