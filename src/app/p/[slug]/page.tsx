@@ -18,7 +18,7 @@ export default async function PublicPaymentPage({
   // team name via the service-role admin client which bypasses RLS.
   const { data: collection } = await supabase
     .from("collections")
-    .select("*")
+    .select("id, team_id, title, description, amount, deadline")
     .eq("slug", slug)
     .eq("status", "active")
     .single();
