@@ -116,6 +116,22 @@ export function CollectionForm({
         </label>
 
         <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text-primary">
+            Betalningsinstruktioner{" "}
+            <span className="text-text-muted font-normal">(valfritt)</span>
+          </span>
+          <textarea
+            name="payment_instructions"
+            rows={3}
+            placeholder="Exempel: Swisha 850 kr till 070-xxx xx xx och skriv spelarens namn."
+            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors resize-none"
+          />
+          <p className="text-xs text-text-muted">
+            Lagkassan hanterar inte själva betalningen ännu. Instruktionerna visas för medlemmen på betalningssidan.
+          </p>
+        </label>
+
+        <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-text-primary">Belopp (kr)</span>
           <div className="relative">
             <input

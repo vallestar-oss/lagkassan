@@ -100,6 +100,7 @@ export type Database = {
           created_by: string;
           title: string;
           description: string | null;
+          payment_instructions: string | null;
           amount: number;
           deadline: string | null;
           slug: string;
@@ -112,6 +113,7 @@ export type Database = {
           created_by: string;
           title: string;
           description?: string | null;
+          payment_instructions?: string | null;
           amount: number;
           deadline?: string | null;
           slug?: string;
@@ -124,6 +126,7 @@ export type Database = {
           created_by?: string;
           title?: string;
           description?: string | null;
+          payment_instructions?: string | null;
           amount?: number;
           deadline?: string | null;
           slug?: string;

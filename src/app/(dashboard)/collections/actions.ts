@@ -25,6 +25,7 @@ export async function createCollection(
 
   const title = (formData.get("title") as string | null)?.trim() ?? "";
   const description = (formData.get("description") as string | null)?.trim() ?? "";
+  const paymentInstructions = (formData.get("payment_instructions") as string | null)?.trim() ?? "";
   const amountStr = (formData.get("amount") as string | null) ?? "";
   const deadline = (formData.get("deadline") as string | null) ?? "";
 
@@ -42,6 +43,7 @@ export async function createCollection(
       created_by: user.id,
       title,
       description: description || null,
+      payment_instructions: paymentInstructions || null,
       amount,
       deadline: deadline || null,
       status: "active",
