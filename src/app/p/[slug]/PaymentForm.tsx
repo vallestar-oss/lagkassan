@@ -24,9 +24,9 @@ export function PaymentForm({
           </svg>
         </div>
         <div>
-          <p className="font-semibold text-text-primary">Betalningen är mottagen!</p>
+          <p className="font-semibold text-text-primary">Simulerad betalning registrerad!</p>
           <p className="text-sm text-text-muted mt-1">
-            Tack — kassören ser din betalning direkt.
+            Betalningen är markerad som genomförd i demoläget. Inga riktiga pengar har dragits.
           </p>
         </div>
       </div>
@@ -66,7 +66,7 @@ export function PaymentForm({
       <label className="flex flex-col gap-1.5">
         <span className="text-sm font-medium text-text-primary">
           E-postadress{" "}
-          <span className="text-text-muted font-normal">(valfritt, för kvitto)</span>
+          <span className="text-text-muted font-normal">(valfritt)</span>
         </span>
         <input
           name="payer_email"
@@ -82,11 +82,11 @@ export function PaymentForm({
         disabled={isPending}
         className="w-full bg-accent text-white font-semibold py-3 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {isPending ? "Behandlar…" : `Betala ${formatOre(amount)}`}
+        {isPending ? "Registrerar…" : `Markera som betald (demo) — ${formatOre(amount)}`}
       </button>
 
       <p className="text-xs text-center text-text-muted">
-        🔒 Simulerad betalning — inga riktiga kortuppgifter krävs ännu
+        Demoläge — inga pengar dras och inga kortuppgifter hanteras.
       </p>
     </form>
   );
