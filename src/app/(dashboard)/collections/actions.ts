@@ -160,6 +160,79 @@ export async function markMemberPaid(
   return { error: error?.code === "23505" ? "Personen har redan betalat." : null };
 }
 
+// Add one or more participants to an existing active collection.
+// Names are submitted as a newline-separated textarea value.
+export async function addCollectionMembers(
+  collectionId: string,
+  _prev: { error: string | null; added: number; skipped: string[] },
+  formData: FormData,
+): Promise<{ error: string | null; added: number; skipped: string[] }> {
+  const supabase = await createClient();
+
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError, added: 0, skipped: [] };
+
+  // Belt-and-suspenders: reject if collection is not active regardless of UI state.
+  const { data: col } = await supabase
+    .from("collections")
+    .select("status")
+    .eq("id", collectionId)
+    .single();
+  if (!col) return { error: "Förfrågan hittades inte.", added: 0, skipped: [] };
+  if (col.status !== "active")
+    return { error: "Det går bara att lägga till deltagare i aktiva förfrågningar.", added: 0, skipped: [] };
+
+  const raw = (formData.get("names") as string | null) ?? "";
+  const names = raw
+    .split("\n")
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .map((n) => n.slice(0, 100)); // cap individual name length
+
+  if (names.length === 0)
+    return { error: "Ange minst ett namn.", added: 0, skipped: [] };
+  if (names.length > 200)
+    return { error: "Max 200 namn per gång.", added: 0, skipped: [] };
+
+  // Fetch existing names for this collection to deduplicate.
+  const { data: existing } = await supabase
+    .from("collection_members")
+    .select("name")
+    .eq("collection_id", collectionId);
+
+  const existingLower = new Set(
+    (existing ?? []).map((m) => m.name.trim().toLowerCase()),
+  );
+
+  const toInsert: string[] = [];
+  const skipped: string[] = [];
+  for (const name of names) {
+    if (existingLower.has(name.toLowerCase())) {
+      skipped.push(name);
+    } else {
+      toInsert.push(name);
+      existingLower.add(name.toLowerCase()); // prevent duplicates within the same submission
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from("collection_members").insert(
+      toInsert.map((name) => ({
+        collection_id: collectionId,
+        name,
+        status: "pending",
+      })),
+    );
+    if (error) return { error: "Kunde inte lägga till deltagare. Försök igen.", added: 0, skipped: [] };
+  }
+
+  revalidatePath(`/collections/${collectionId}`);
+  return { error: null, added: toInsert.length, skipped };
+}
+
 // Close or re-open a collection
 export async function setCollectionStatus(
   collectionId: string,

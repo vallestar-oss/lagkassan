@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
 import { markPaid, markMemberPaid, setCollectionStatus } from "../actions";
 import { CopyButton } from "./CopyButton";
+import { AddMembersForm } from "./AddMembersForm";
 
 export default async function CollectionDetailPage({
   params,
@@ -262,6 +263,13 @@ export default async function CollectionDetailPage({
           </ul>
         )}
       </div>
+      {/* Add participants — only for active collections the user can edit */}
+      {canEdit && collection.status === "active" && (
+        <AddMembersForm
+          collectionId={id}
+          isFreeForm={!hasRoster}
+        />
+      )}
     </div>
   );
 }
