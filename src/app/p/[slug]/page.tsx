@@ -18,7 +18,7 @@ export default async function PublicPaymentPage({
   // team name via the service-role admin client which bypasses RLS.
   const { data: collection } = await supabase
     .from("collections")
-    .select("id, team_id, title, description, amount, deadline")
+    .select("id, team_id, title, description, amount, deadline, payment_instructions")
     .eq("slug", slug)
     .eq("status", "active")
     .single();
@@ -106,17 +106,34 @@ export default async function PublicPaymentPage({
           </p>
         </div>
 
+        {/* Payment instructions — shown when the organizer has set them */}
+        {collection.payment_instructions && (
+          <div className="bg-white border border-surface-border rounded-lg p-6 shadow-card flex flex-col gap-2">
+            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+              Betalningsinstruktioner
+            </p>
+            <p className="text-sm text-text-primary whitespace-pre-wrap">
+              {collection.payment_instructions}
+            </p>
+            <p className="text-xs text-text-muted mt-1">
+              Följ instruktionerna ovan och markera sedan att du har betalat.
+            </p>
+          </div>
+        )}
+
         {/* Payment: roster flow (member list) or free-form fallback */}
         {hasRoster ? (
           <RosterPaymentFlow
             collectionId={collection.id}
             amount={collection.amount}
             members={members}
+            hasInstructions={!!collection.payment_instructions}
           />
         ) : (
           <PaymentForm
             collectionId={collection.id}
             amount={collection.amount}
+            hasInstructions={!!collection.payment_instructions}
           />
         )}
 

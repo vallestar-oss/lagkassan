@@ -9,9 +9,11 @@ const initial: PaymentState = { error: null, success: false };
 export function PaymentForm({
   collectionId,
   amount,
+  hasInstructions,
 }: {
   collectionId: string;
   amount: number;
+  hasInstructions?: boolean;
 }) {
   const [state, action, isPending] = useActionState(submitMockPayment, initial);
 
@@ -24,10 +26,21 @@ export function PaymentForm({
           </svg>
         </div>
         <div>
-          <p className="font-semibold text-text-primary">Simulerad betalning registrerad!</p>
-          <p className="text-sm text-text-muted mt-1">
-            Betalningen är markerad som genomförd i demoläget. Inga riktiga pengar har dragits.
-          </p>
+          {hasInstructions ? (
+            <>
+              <p className="font-semibold text-text-primary">Tack!</p>
+              <p className="text-sm text-text-muted mt-1">
+                Din betalning har markerats som gjord. Kassören behöver fortfarande kontrollera betalningen.
+              </p>
+            </>
+          ) : (
+            <>
+              <p className="font-semibold text-text-primary">Simulerad betalning registrerad!</p>
+              <p className="text-sm text-text-muted mt-1">
+                Betalningen är markerad som genomförd i demoläget. Inga riktiga pengar har dragits.
+              </p>
+            </>
+          )}
         </div>
       </div>
     );
@@ -82,11 +95,17 @@ export function PaymentForm({
         disabled={isPending}
         className="w-full bg-accent text-white font-semibold py-3 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
       >
-        {isPending ? "Registrerar…" : `Markera som betald (demo) — ${formatOre(amount)}`}
+        {isPending
+          ? "Registrerar…"
+          : hasInstructions
+          ? `Jag har betalat enligt instruktionerna — ${formatOre(amount)}`
+          : `Markera som betald (demo) — ${formatOre(amount)}`}
       </button>
 
       <p className="text-xs text-center text-text-muted">
-        Demoläge — inga pengar dras och inga kortuppgifter hanteras.
+        {hasInstructions
+          ? "Lagkassan hanterar inte betalningen — kassören kontrollerar manuellt."
+          : "Demoläge — inga pengar dras och inga kortuppgifter hanteras."}
       </p>
     </form>
   );
