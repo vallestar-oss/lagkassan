@@ -68,6 +68,16 @@ export function Sidebar({ teams }: { teams: Team[] }) {
           >
             Översikt
           </Link>
+          <Link
+            href="/guide"
+            className={`block px-2 py-1.5 rounded-md text-sm transition-colors ${
+              pathname === "/guide"
+                ? "bg-accent-light text-accent font-medium"
+                : "text-text-muted hover:bg-surface-alt hover:text-text-primary"
+            }`}
+          >
+            Så testar du Lagkassan
+          </Link>
         </div>
       </nav>
     </aside>

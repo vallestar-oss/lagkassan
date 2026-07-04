@@ -67,6 +67,9 @@ export default function LandingPage() {
             <a href="#funktioner" className="text-sm text-text-muted hover:text-text-primary transition-colors hidden sm:block">
               Funktioner
             </a>
+            <Link href="/guide" className="text-sm text-text-muted hover:text-text-primary transition-colors hidden sm:block">
+              Så testar du
+            </Link>
             <Link
               href="/login"
               className="text-sm text-text-muted hover:text-text-primary transition-colors"
