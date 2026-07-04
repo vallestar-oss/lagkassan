@@ -68,8 +68,10 @@ export function RosterPaymentFlow({
                 <button
                   type="button"
                   onClick={() => setSelectedId(isSelected ? null : m.id)}
-                  className={`w-full flex items-center justify-between px-5 py-3.5 text-left transition-colors ${
-                    isSelected ? "bg-accent-light" : "hover:bg-surface cursor-pointer"
+                  className={`w-full flex items-center justify-between gap-3 px-5 py-3.5 text-left transition-colors border-l-2 ${
+                    isSelected
+                      ? "bg-accent-light border-accent"
+                      : "border-transparent hover:bg-surface cursor-pointer active:bg-surface-alt"
                   }`}
                 >
                   <span
@@ -80,7 +82,7 @@ export function RosterPaymentFlow({
                     {abbreviateName(m.name)}
                   </span>
                   {isSelected && (
-                    <span className="text-xs font-medium text-accent">Vald ↓</span>
+                    <IconCheck className="w-4 h-4 text-accent flex-shrink-0" />
                   )}
                 </button>
               </li>

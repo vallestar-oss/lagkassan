@@ -34,13 +34,13 @@ export function Sidebar({ teams }: { teams: Team[] }) {
                   <li key={t.id}>
                     <Link
                       href={`/teams/${t.id}`}
-                      className={`block px-2 py-1.5 rounded-md text-sm truncate transition-colors ${
+                      className={`flex items-center gap-2 pl-2.5 pr-2 py-1.5 rounded-md text-sm truncate transition-colors border-l-2 ${
                         isActive
-                          ? "bg-accent-light text-accent font-medium"
-                          : "text-text-primary hover:bg-surface-alt"
+                          ? "bg-accent-light text-accent font-medium border-accent"
+                          : "text-text-primary border-transparent hover:bg-surface-alt hover:border-surface-border"
                       }`}
                     >
-                      {t.name}
+                      <span className="truncate">{t.name}</span>
                     </Link>
                   </li>
                 );
@@ -57,23 +57,23 @@ export function Sidebar({ teams }: { teams: Team[] }) {
           </Link>
         </div>
 
-        <div className="border-t border-surface-border pt-4">
+        <div className="border-t border-surface-border pt-4 flex flex-col gap-0.5">
           <Link
             href="/dashboard"
-            className={`block px-2 py-1.5 rounded-md text-sm transition-colors ${
+            className={`pl-2.5 pr-2 py-1.5 rounded-md text-sm transition-colors border-l-2 ${
               pathname === "/dashboard"
-                ? "bg-accent-light text-accent font-medium"
-                : "text-text-muted hover:bg-surface-alt hover:text-text-primary"
+                ? "bg-accent-light text-accent font-medium border-accent"
+                : "text-text-muted border-transparent hover:bg-surface-alt hover:text-text-primary"
             }`}
           >
             Översikt
           </Link>
           <Link
             href="/guide"
-            className={`block px-2 py-1.5 rounded-md text-sm transition-colors ${
+            className={`pl-2.5 pr-2 py-1.5 rounded-md text-sm transition-colors border-l-2 ${
               pathname === "/guide"
-                ? "bg-accent-light text-accent font-medium"
-                : "text-text-muted hover:bg-surface-alt hover:text-text-primary"
+                ? "bg-accent-light text-accent font-medium border-accent"
+                : "text-text-muted border-transparent hover:bg-surface-alt hover:text-text-primary"
             }`}
           >
             Så testar du Lagkassan

@@ -20,6 +20,15 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "confirmed_paid",label: "Bekräftat av kassör" },
 ];
 
+// Shared classes so every badge/button on this list stays visually consistent.
+const badgeBase = "text-xs font-medium px-2.5 py-1 rounded-full border whitespace-nowrap";
+const badgeUnpaid = `${badgeBase} bg-surface-alt text-text-muted border-surface-border`;
+const badgeReported = `${badgeBase} bg-amber-50 text-amber-700 border-amber-200`;
+const badgeConfirmed = `${badgeBase} bg-success-light text-success border-success/20`;
+const btnBase = "text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted transition-colors whitespace-nowrap";
+const btnSuccess = `${btnBase} hover:border-success hover:text-success`;
+const btnDanger = `${btnBase} hover:border-danger hover:text-danger`;
+
 export function MemberList({
   members,
   collectionId,
@@ -92,7 +101,7 @@ export function MemberList({
           {filtered.map((member) => (
             <li
               key={member.id}
-              className="flex items-center justify-between px-5 py-3 gap-3"
+              className="flex flex-wrap items-center justify-between px-5 py-3 gap-x-3 gap-y-2"
             >
               <p className="text-sm font-medium text-text-primary flex-1 min-w-0 truncate">
                 {member.name}
@@ -104,16 +113,11 @@ export function MemberList({
 
                 {member.status === "confirmed_paid" ? (
                   <div className="flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-success-light text-success border border-success/20">
-                        Bekräftat av kassör
-                      </span>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span className={badgeConfirmed}>Bekräftat av kassör</span>
                       {canEdit && (
                         <form action={async () => { await revertAction(member.id, collectionId); }}>
-                          <button
-                            type="submit"
-                            className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
-                          >
+                          <button type="submit" className={btnDanger}>
                             Ångra
                           </button>
                         </form>
@@ -133,25 +137,17 @@ export function MemberList({
 
                 ) : member.status === "reported_paid" ? (
                   <div className="flex flex-col items-end gap-1">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                        Rapporterat betalt
-                      </span>
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <span className={badgeReported}>Rapporterat betalt</span>
                       {canEdit && (
                         <>
                           <form action={async () => { await confirmAction(member.id, collectionId); }}>
-                            <button
-                              type="submit"
-                              className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
-                            >
+                            <button type="submit" className={btnSuccess}>
                               Bekräfta
                             </button>
                           </form>
                           <form action={async () => { await revertAction(member.id, collectionId); }}>
-                            <button
-                              type="submit"
-                              className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
-                            >
+                            <button type="submit" className={btnDanger}>
                               Ångra
                             </button>
                           </form>
@@ -166,15 +162,10 @@ export function MemberList({
                   </div>
 
                 ) : canEdit ? (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-surface-alt text-text-muted border border-surface-border">
-                      Ej betald
-                    </span>
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <span className={badgeUnpaid}>Ej betald</span>
                     <form action={async () => { await markPaidAction(member.id, member.name, collectionId); }}>
-                      <button
-                        type="submit"
-                        className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
-                      >
+                      <button type="submit" className={btnSuccess}>
                         Markera betald
                       </button>
                     </form>
@@ -182,7 +173,7 @@ export function MemberList({
                       <form action={async () => { await removeAction(member.id, collectionId); }}>
                         <button
                           type="submit"
-                          className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                          className={btnDanger}
                           aria-label={`Ta bort ${member.name}`}
                         >
                           Ta bort
@@ -192,9 +183,7 @@ export function MemberList({
                   </div>
 
                 ) : (
-                  <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-surface-alt text-text-muted border border-surface-border">
-                    Ej betald
-                  </span>
+                  <span className={badgeUnpaid}>Ej betald</span>
                 )}
               </div>
             </li>
