@@ -9,6 +9,14 @@ import { revalidatePath } from "next/cache";
 
 export type CollectionState = { error: string | null };
 
+// Revalidate every view that shows this collection's summary/status so the
+// dashboard, team page, and collection detail page never show stale counts.
+function revalidateCollectionViews(collectionId: string, teamId?: string) {
+  revalidatePath(`/collections/${collectionId}`);
+  revalidatePath("/dashboard");
+  if (teamId) revalidatePath(`/teams/${teamId}`);
+}
+
 export async function createCollection(
   _prev: CollectionState,
   formData: FormData,
@@ -73,6 +81,8 @@ export async function createCollection(
     );
   }
 
+  revalidatePath("/dashboard");
+  revalidatePath(`/teams/${teamId}`);
   redirect(`/collections/${collection.id}`);
 }
 
@@ -85,7 +95,7 @@ export async function markPaid(
 
   // Defense-in-depth: the payments RLS is permissive (public insert), so verify
   // the caller is an owner/treasurer of this collection's team before writing.
-  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -98,7 +108,7 @@ export async function markPaid(
 
   if (error) return { error: "Kunde inte uppdatera betalningen. Försök igen." };
 
-  revalidatePath(`/collections/${collectionId}`);
+  revalidateCollectionViews(collectionId, teamId);
   return { error: null };
 }
 
@@ -116,7 +126,7 @@ export async function markMemberPaid(
   // Defense-in-depth: the payments RLS allows public inserts, so verify the
   // caller is an owner/treasurer of this collection's team before inserting a
   // manual 'paid' payment on a member's behalf.
-  const { user, error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { user, teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -130,7 +140,7 @@ export async function markMemberPaid(
     .eq("id", memberId)
     .single();
   if (member && member.status !== "unpaid") {
-    revalidatePath(`/collections/${collectionId}`);
+    revalidateCollectionViews(collectionId, teamId);
     return { error: "Personen är redan rapporterad eller bekräftad som betald." };
   }
 
@@ -158,7 +168,7 @@ export async function markMemberPaid(
   if (error && error.code !== "23505")
     return { error: "Kunde inte registrera betalningen. Försök igen." };
   if (error?.code === "23505") {
-    revalidatePath(`/collections/${collectionId}`);
+    revalidateCollectionViews(collectionId, teamId);
     return { error: "Personen har redan betalat." };
   }
 
@@ -172,7 +182,7 @@ export async function markMemberPaid(
       .eq("collection_id", collectionId);
   }
 
-  revalidatePath(`/collections/${collectionId}`);
+  revalidateCollectionViews(collectionId, teamId);
   return { error: null };
 }
 
@@ -185,7 +195,7 @@ export async function confirmMemberPayment(
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
 
-  const { user, error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { user, teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -213,7 +223,7 @@ export async function confirmMemberPayment(
 
   if (error) return { error: "Kunde inte bekräfta betalningen. Försök igen." };
 
-  revalidatePath(`/collections/${collectionId}`);
+  revalidateCollectionViews(collectionId, teamId);
   return { error: null };
 }
 
@@ -226,7 +236,7 @@ export async function revertMemberPayment(
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
 
-  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -272,7 +282,7 @@ export async function revertMemberPayment(
     // index only blocks inserts, not reads).
   }
 
-  revalidatePath(`/collections/${collectionId}`);
+  revalidateCollectionViews(collectionId, teamId);
   return { error: null };
 }
 
@@ -285,7 +295,7 @@ export async function addCollectionMembers(
 ): Promise<{ error: string | null; added: number; skipped: string[] }> {
   const supabase = await createClient();
 
-  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -345,7 +355,7 @@ export async function addCollectionMembers(
     if (error) return { error: "Kunde inte lägga till deltagare. Försök igen.", added: 0, skipped: [] };
   }
 
-  revalidatePath(`/collections/${collectionId}`);
+  revalidateCollectionViews(collectionId, teamId);
   return { error: null, added: toInsert.length, skipped };
 }
 
@@ -356,7 +366,7 @@ export async function removeCollectionMember(
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
 
-  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -391,7 +401,7 @@ export async function removeCollectionMember(
 
   if (error) return { error: "Kunde inte ta bort deltagaren. Försök igen." };
 
-  revalidatePath(`/collections/${collectionId}`);
+  revalidateCollectionViews(collectionId, teamId);
   return { error: null };
 }
 
@@ -439,7 +449,7 @@ export async function setCollectionStatus(
   const supabase = await createClient();
 
   // Defense-in-depth: only owners/treasurers of this collection's team.
-  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -452,6 +462,6 @@ export async function setCollectionStatus(
 
   if (error) return { error: "Kunde inte uppdatera förfrågan. Försök igen." };
 
-  revalidatePath(`/collections/${collectionId}`);
+  revalidateCollectionViews(collectionId, teamId);
   return { error: null };
 }

@@ -34,6 +34,9 @@ export async function createTeam(
 
   if (memberError) return { error: memberError.message };
 
+  // Bust the dashboard layout cache so the sidebar's "Mina lag" list shows
+  // the new team immediately, without a manual browser refresh.
+  revalidatePath("/dashboard", "layout");
   redirect("/dashboard");
 }
 

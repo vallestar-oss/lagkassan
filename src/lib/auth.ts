@@ -4,7 +4,7 @@ import type { User } from "@supabase/supabase-js";
 type Client = Awaited<ReturnType<typeof createClient>>;
 type Role = "owner" | "treasurer" | "member";
 
-export type AuthResult = { user: User | null; error: string | null };
+export type AuthResult = { user: User | null; error: string | null; teamId?: string };
 
 const NOT_LOGGED_IN = "Inte inloggad.";
 const UNAUTHORIZED = "Du har inte behörighet för den här åtgärden.";
@@ -61,5 +61,6 @@ export async function assertCollectionRole(
 
   if (!col) return { user: null, error: "Förfrågan hittades inte." };
 
-  return assertTeamRole(supabase, col.team_id, roles);
+  const result = await assertTeamRole(supabase, col.team_id, roles);
+  return { ...result, teamId: col.team_id };
 }

@@ -14,6 +14,7 @@ import { CopyButton } from "./CopyButton";
 import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
 import { MemberList } from "./MemberList";
+import { AutoRefresh } from "./AutoRefresh";
 
 export default async function CollectionDetailPage({
   params,
@@ -89,6 +90,7 @@ export default async function CollectionDetailPage({
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
+      <AutoRefresh />
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>

@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
 export type PaymentState = { error: string | null; success: boolean };
 
@@ -57,7 +58,7 @@ export async function submitMockPayment(
   // from this same server-side amount.
   const { data: collection } = await supabase
     .from("collections")
-    .select("status, amount")
+    .select("status, amount, slug")
     .eq("id", collectionId)
     .single();
 
@@ -103,6 +104,11 @@ export async function submitMockPayment(
       return { error: "Den här personen har redan betalat.", success: false };
     return { error: "Kunde inte registrera betalningen. Försök igen.", success: false };
   }
+
+  // Mark both the public page and the organizer's collection page stale so
+  // the next load (or the organizer's auto-refresh poll) picks up the report.
+  revalidatePath(`/p/${collection.slug}`);
+  revalidatePath(`/collections/${collectionId}`);
 
   return { error: null, success: true };
 }
