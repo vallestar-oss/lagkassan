@@ -103,7 +103,7 @@ export function RosterManager({
         {members.length === 0 ? (
           <div className="px-5 py-10 text-center">
             <p className="text-sm text-text-muted">
-              Inga medlemmar än.{" "}
+              Inga medlemmar ännu.{" "}
               {canManage && "Lägg till namn ovan för att bygga din lista."}
             </p>
           </div>

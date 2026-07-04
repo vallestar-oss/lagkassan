@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
+import { Sidebar } from "./Sidebar";
 
 export default async function DashboardLayout({
   children,
@@ -13,9 +14,12 @@ export default async function DashboardLayout({
     !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   ) {
     return (
-      <div className="min-h-screen bg-surface">
-        <TopBar email="(Supabase ej konfigurerat)" />
-        <main className="max-w-5xl mx-auto px-6 py-10">{children}</main>
+      <div className="min-h-screen bg-surface flex">
+        <Sidebar teams={[]} />
+        <div className="flex-1 flex flex-col min-w-0">
+          <TopBar email="(Supabase ej konfigurerat)" />
+          <main className="max-w-5xl mx-auto px-6 py-10 w-full">{children}</main>
+        </div>
       </div>
     );
   }
@@ -27,10 +31,22 @@ export default async function DashboardLayout({
 
   if (!user) redirect("/login");
 
+  const { data: memberships } = await supabase
+    .from("team_members")
+    .select("teams(id, name)")
+    .eq("user_id", user.id);
+
+  const teams = (memberships ?? [])
+    .map((m) => m.teams as { id: string; name: string } | null)
+    .filter((t): t is { id: string; name: string } => t !== null);
+
   return (
-    <div className="min-h-screen bg-surface">
-      <TopBar email={user.email ?? ""} />
-      <main className="max-w-5xl mx-auto px-6 py-10">{children}</main>
+    <div className="min-h-screen bg-surface flex">
+      <Sidebar teams={teams} />
+      <div className="flex-1 flex flex-col min-w-0">
+        <TopBar email={user.email ?? ""} />
+        <main className="max-w-5xl mx-auto px-6 py-10 w-full">{children}</main>
+      </div>
     </div>
   );
 }
