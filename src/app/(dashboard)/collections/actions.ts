@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { assertTeamRole, assertCollectionRole } from "@/lib/auth";
 import { parseSekToOre } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -198,8 +199,9 @@ export async function confirmMemberPayment(
   return { error: null };
 }
 
-// Treasurer reverts a member back to unpaid — e.g. a mistaken confirmation,
-// or a self-report that turned out to be wrong.
+// Treasurer reverts a member's payment status one step back:
+//   confirmed_paid → reported_paid  (leaves payment row intact; member stays reported)
+//   reported_paid  → unpaid         (deletes the payment row so member can re-report)
 export async function revertMemberPayment(
   memberId: string,
   collectionId: string,
@@ -222,13 +224,35 @@ export async function revertMemberPayment(
   if (member.status === "unpaid")
     return { error: "Personen är redan markerad som obetald." };
 
-  const { error } = await supabase
-    .from("collection_members")
-    .update({ status: "unpaid" })
-    .eq("id", memberId)
-    .eq("collection_id", collectionId);
+  if (member.status === "confirmed_paid") {
+    // Step back to reported — the self-report payment row is still valid.
+    const { error } = await supabase
+      .from("collection_members")
+      .update({ status: "reported_paid" })
+      .eq("id", memberId)
+      .eq("collection_id", collectionId);
+    if (error) return { error: "Kunde inte återställa statusen. Försök igen." };
+  } else {
+    // reported_paid → unpaid: also delete the payment row so the member can
+    // self-report again. No treasurer DELETE policy exists on payments, so we
+    // use the admin (service-role) client which bypasses RLS.
+    const { error: memberError } = await supabase
+      .from("collection_members")
+      .update({ status: "unpaid" })
+      .eq("id", memberId)
+      .eq("collection_id", collectionId);
+    if (memberError) return { error: "Kunde inte återställa statusen. Försök igen." };
 
-  if (error) return { error: "Kunde inte återställa statusen. Försök igen." };
+    const admin = createAdminClient();
+    await admin
+      .from("payments")
+      .delete()
+      .eq("collection_member_id", memberId)
+      .eq("collection_id", collectionId);
+    // Ignore payment-delete errors — member status is already reset, and a
+    // lingering payment row is harmless once the member is unpaid (the unique
+    // index only blocks inserts, not reads).
+  }
 
   revalidatePath(`/collections/${collectionId}`);
   return { error: null };
