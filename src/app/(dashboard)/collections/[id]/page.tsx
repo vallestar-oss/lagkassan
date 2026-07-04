@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatOre, formatSwedishDate, formatSwedishDateTime } from "@/lib/utils";
+import { formatOre, formatSwedishDate } from "@/lib/utils";
 import {
   markPaid,
   markMemberPaid,
@@ -13,6 +13,7 @@ import {
 import { CopyButton } from "./CopyButton";
 import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
+import { MemberList } from "./MemberList";
 
 export default async function CollectionDetailPage({
   params,
@@ -67,21 +68,19 @@ export default async function CollectionDetailPage({
 
   // "Reported" = anyone who has said they paid, whether or not the treasurer
   // has confirmed it yet. "Confirmed" = the treasurer has checked it externally.
-  const reportedCount = hasRoster
-    ? rosterMembers.filter((m) => m.status !== "unpaid").length
-    : paymentList.filter((p) => p.status === "paid").length;
+  const totalCount     = hasRoster ? rosterMembers.length : paymentList.length;
+  const unpaidCount    = hasRoster ? rosterMembers.filter((m) => m.status === "unpaid").length        : 0;
+  const reportedCount  = hasRoster ? rosterMembers.filter((m) => m.status === "reported_paid").length : paymentList.filter((p) => p.status === "paid").length;
+  const confirmedCount = hasRoster ? rosterMembers.filter((m) => m.status === "confirmed_paid").length : reportedCount;
 
-  const confirmedCount = hasRoster
-    ? rosterMembers.filter((m) => m.status === "confirmed_paid").length
-    : reportedCount; // free-form payments have no separate confirm step yet
-
-  const totalCount = hasRoster ? rosterMembers.length : paymentList.length;
-
+  const totalAmount     = totalCount * collection.amount;
+  const reportedAmount  = hasRoster
+    ? (reportedCount + confirmedCount) * collection.amount
+    : reportedCount * collection.amount;
   const confirmedAmount = hasRoster
     ? confirmedCount * collection.amount
-    : paymentList
-        .filter((p) => p.status === "paid")
-        .reduce((sum, p) => sum + p.amount, 0);
+    : paymentList.filter((p) => p.status === "paid").reduce((sum, p) => sum + p.amount, 0);
+  const remainingAmount = totalAmount - confirmedAmount;
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const shareUrl = `${appUrl}/p/${collection.slug}`;
@@ -146,21 +145,34 @@ export default async function CollectionDetailPage({
         </p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
+      {/* Status summary */}
+      {hasRoster && (
+        <div className="flex flex-wrap gap-2">
+          {[
+            { label: "Totalt",    value: totalCount,     cls: "bg-surface-alt text-text-muted border-surface-border" },
+            { label: "Ej betalda", value: unpaidCount,   cls: "bg-surface-alt text-text-muted border-surface-border" },
+            { label: "Rapporterat", value: reportedCount, cls: unpaidCount === 0 && reportedCount === 0 ? "bg-surface-alt text-text-muted border-surface-border" : "bg-amber-50 text-amber-700 border-amber-200" },
+            { label: "Bekräftat",  value: confirmedCount, cls: confirmedCount === 0 ? "bg-surface-alt text-text-muted border-surface-border" : "bg-success-light text-success border-success/20" },
+          ].map((s) => (
+            <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium ${s.cls}`}>
+              <span className="text-text-muted font-normal">{s.label}:</span>
+              <span className="font-bold tabular-nums">{s.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Amount stats */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {[
-          { label: "Rapporterade betalningar", value: `${reportedCount} / ${totalCount}` },
-          { label: "Bekräftat betalt", value: formatOre(confirmedAmount) },
-          { label: "Belopp/person", value: formatOre(collection.amount) },
+          { label: "Förväntat totalt",    value: formatOre(totalAmount) },
+          { label: "Rapporterat betalt",  value: formatOre(reportedAmount) },
+          { label: "Bekräftat av kassör", value: formatOre(confirmedAmount) },
+          { label: "Kvar att bekräfta",   value: formatOre(remainingAmount) },
         ].map((s) => (
-          <div
-            key={s.label}
-            className="bg-white border border-surface-border rounded-lg p-4 shadow-card"
-          >
+          <div key={s.label} className="bg-white border border-surface-border rounded-lg p-4 shadow-card">
             <p className="text-xs text-text-muted">{s.label}</p>
-            <p className="text-lg font-bold text-text-primary font-mono mt-0.5">
-              {s.value}
-            </p>
+            <p className="text-base font-bold text-text-primary font-mono mt-0.5">{s.value}</p>
           </div>
         ))}
       </div>
@@ -176,210 +188,67 @@ export default async function CollectionDetailPage({
       </div>
 
       {/* Member / payment list */}
-      <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
-        <div className="px-5 py-3 border-b border-surface-border flex items-center justify-between">
-          <p className="text-sm font-semibold text-text-primary">
-            {hasRoster ? "Deltagare" : "Rapporterade betalningar"}
-          </p>
-          <span className="text-xs text-text-muted">
-            {collection.status === "active" ? "Aktiv" : "Stängd"}
-          </span>
-        </div>
-
-        {hasRoster ? (
-          /* Roster-based: one row per expected payer */
-          rosterMembers.length === 0 ? null : (
+      {hasRoster ? (
+        <MemberList
+          members={rosterMembers}
+          collectionId={id}
+          collectionAmount={collection.amount}
+          collectionStatus={collection.status}
+          canEdit={canEdit}
+          confirmAction={confirmMemberPayment}
+          revertAction={revertMemberPayment}
+          markPaidAction={markMemberPaid}
+          removeAction={removeCollectionMember}
+        />
+      ) : (
+        /* Free-form: show individual payment rows */
+        <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
+          <div className="px-5 py-3 border-b border-surface-border flex items-center justify-between">
+            <p className="text-sm font-semibold text-text-primary">Rapporterade betalningar</p>
+            <span className="text-xs text-text-muted">
+              {collection.status === "active" ? "Aktiv" : "Stängd"}
+            </span>
+          </div>
+          {paymentList.length === 0 ? (
+            <div className="px-5 py-10 text-center">
+              <p className="text-sm text-text-muted">
+                Inga betalningar än. Dela länken ovan för att komma igång.
+              </p>
+            </div>
+          ) : (
             <ul className="divide-y divide-surface-border">
-              {rosterMembers.map((member) => (
-                <li
-                  key={member.id}
-                  className="flex items-center justify-between px-5 py-3 gap-3"
-                >
-                  <p className="text-sm font-medium text-text-primary flex-1 min-w-0 truncate">
-                    {member.name}
-                  </p>
+              {paymentList.map((payment) => (
+                <li key={payment.id} className="flex items-center justify-between px-5 py-3 gap-3">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-text-primary truncate">{payment.payer_name}</p>
+                    {payment.payer_email && (
+                      <p className="text-xs text-text-muted truncate">{payment.payer_email}</p>
+                    )}
+                  </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="font-mono text-sm text-text-muted">
-                      {formatOre(collection.amount)}
-                    </span>
-                    {member.status === "confirmed_paid" ? (
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-success-light text-success border border-success/20">
-                            Bekräftat av kassör
-                          </span>
-                          {canEdit && (
-                            <form
-                              action={async () => {
-                                "use server";
-                                await revertMemberPayment(member.id, id);
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
-                              >
-                                Ångra
-                              </button>
-                            </form>
-                          )}
-                        </div>
-                        {member.confirmed_at && (
-                          <p className="text-xs text-text-muted">
-                            Bekräftat: {formatSwedishDateTime(member.confirmed_at)}
-                          </p>
-                        )}
-                        {member.reported_at && (
-                          <p className="text-xs text-text-muted">
-                            Rapporterat: {formatSwedishDateTime(member.reported_at)}
-                          </p>
-                        )}
-                      </div>
-                    ) : member.status === "reported_paid" ? (
-                      <div className="flex flex-col items-end gap-1">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                            Rapporterat betalt
-                          </span>
-                          {canEdit && (
-                            <>
-                              <form
-                                action={async () => {
-                                  "use server";
-                                  await confirmMemberPayment(member.id, id);
-                                }}
-                              >
-                                <button
-                                  type="submit"
-                                  className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
-                                >
-                                  Bekräfta
-                                </button>
-                              </form>
-                              <form
-                                action={async () => {
-                                  "use server";
-                                  await revertMemberPayment(member.id, id);
-                                }}
-                              >
-                                <button
-                                  type="submit"
-                                  className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
-                                >
-                                  Ångra
-                                </button>
-                              </form>
-                            </>
-                          )}
-                        </div>
-                        {member.reported_at && (
-                          <p className="text-xs text-text-muted">
-                            Rapporterat: {formatSwedishDateTime(member.reported_at)}
-                          </p>
-                        )}
-                      </div>
+                    <span className="font-mono text-sm text-text-muted">{formatOre(payment.amount)}</span>
+                    {payment.status === "paid" ? (
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-success-light text-success">
+                        Betald
+                      </span>
                     ) : canEdit ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-surface-alt text-text-muted border border-surface-border">
-                          Ej betald
-                        </span>
-                        <form
-                          action={async () => {
-                            "use server";
-                            await markMemberPaid(member.id, member.name, id);
-                          }}
-                        >
-                          <button
-                            type="submit"
-                            className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
-                          >
-                            Markera betald
-                          </button>
-                        </form>
-                        {collection.status === "active" && (
-                          <form
-                            action={async () => {
-                              "use server";
-                              await removeCollectionMember(member.id, id);
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
-                              aria-label={`Ta bort ${member.name}`}
-                            >
-                              Ta bort
-                            </button>
-                          </form>
-                        )}
-                      </div>
+                      <form action={async () => { "use server"; await markPaid(payment.id, id); }}>
+                        <button type="submit" className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors">
+                          Markera betald
+                        </button>
+                      </form>
                     ) : (
-                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-surface-alt text-text-muted border border-surface-border">
-                        Ej betald
+                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-surface-alt text-text-muted">
+                        Väntar
                       </span>
                     )}
                   </div>
                 </li>
               ))}
             </ul>
-          )
-        ) : /* Free-form: show individual payment rows */
-        paymentList.length === 0 ? (
-          <div className="px-5 py-10 text-center">
-            <p className="text-sm text-text-muted">
-              Inga betalningar än. Dela länken ovan för att komma igång.
-            </p>
-          </div>
-        ) : (
-          <ul className="divide-y divide-surface-border">
-            {paymentList.map((payment) => (
-              <li
-                key={payment.id}
-                className="flex items-center justify-between px-5 py-3 gap-3"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-text-primary truncate">
-                    {payment.payer_name}
-                  </p>
-                  {payment.payer_email && (
-                    <p className="text-xs text-text-muted truncate">
-                      {payment.payer_email}
-                    </p>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 flex-shrink-0">
-                  <span className="font-mono text-sm text-text-muted">
-                    {formatOre(payment.amount)}
-                  </span>
-                  {payment.status === "paid" ? (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-success-light text-success">
-                      Betald
-                    </span>
-                  ) : canEdit ? (
-                    <form
-                      action={async () => {
-                        "use server";
-                        await markPaid(payment.id, id);
-                      }}
-                    >
-                      <button
-                        type="submit"
-                        className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
-                      >
-                        Markera betald
-                      </button>
-                    </form>
-                  ) : (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded bg-surface-alt text-text-muted">
-                      Väntar
-                    </span>
-                  )}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </div>
+          )}
+        </div>
+      )}
       {/* Add participants — only for active collections the user can edit */}
       {canEdit && collection.status === "active" && (
         <AddMembersForm
