@@ -75,7 +75,7 @@ export async function submitMockPayment(
       .select("status")
       .eq("id", collectionMemberId)
       .single();
-    if (member?.status === "paid")
+    if (member && member.status !== "unpaid")
       return { error: "Den här personen har redan betalat.", success: false };
   }
 

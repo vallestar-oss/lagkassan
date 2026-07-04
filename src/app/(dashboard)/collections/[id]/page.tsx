@@ -2,7 +2,14 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
-import { markPaid, markMemberPaid, setCollectionStatus, removeCollectionMember } from "../actions";
+import {
+  markPaid,
+  markMemberPaid,
+  setCollectionStatus,
+  removeCollectionMember,
+  confirmMemberPayment,
+  revertMemberPayment,
+} from "../actions";
 import { CopyButton } from "./CopyButton";
 import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
@@ -58,14 +65,20 @@ export default async function CollectionDetailPage({
           .order("created_at", { ascending: false })
       ).data ?? [];
 
-  const paidCount = hasRoster
-    ? rosterMembers.filter((m) => m.status === "paid").length
+  // "Reported" = anyone who has said they paid, whether or not the treasurer
+  // has confirmed it yet. "Confirmed" = the treasurer has checked it externally.
+  const reportedCount = hasRoster
+    ? rosterMembers.filter((m) => m.status !== "unpaid").length
     : paymentList.filter((p) => p.status === "paid").length;
+
+  const confirmedCount = hasRoster
+    ? rosterMembers.filter((m) => m.status === "confirmed_paid").length
+    : reportedCount; // free-form payments have no separate confirm step yet
 
   const totalCount = hasRoster ? rosterMembers.length : paymentList.length;
 
-  const paidAmount = hasRoster
-    ? paidCount * collection.amount
+  const confirmedAmount = hasRoster
+    ? confirmedCount * collection.amount
     : paymentList
         .filter((p) => p.status === "paid")
         .reduce((sum, p) => sum + p.amount, 0);
@@ -136,8 +149,8 @@ export default async function CollectionDetailPage({
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Markerade betalningar", value: `${paidCount} / ${totalCount}` },
-          { label: "Rapporterat betalt", value: formatOre(paidAmount) },
+          { label: "Rapporterade betalningar", value: `${reportedCount} / ${totalCount}` },
+          { label: "Bekräftat betalt", value: formatOre(confirmedAmount) },
           { label: "Belopp/person", value: formatOre(collection.amount) },
         ].map((s) => (
           <div
@@ -184,10 +197,63 @@ export default async function CollectionDetailPage({
                     <span className="font-mono text-sm text-text-muted">
                       {formatOre(collection.amount)}
                     </span>
-                    {member.status === "paid" ? (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-success-light text-success">
-                        Betald
-                      </span>
+                    {member.status === "confirmed_paid" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-success-light text-success">
+                          Bekräftat
+                        </span>
+                        {canEdit && (
+                          <form
+                            action={async () => {
+                              "use server";
+                              await revertMemberPayment(member.id, id);
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                            >
+                              Ångra
+                            </button>
+                          </form>
+                        )}
+                      </div>
+                    ) : member.status === "reported_paid" ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-warning/10 text-warning">
+                          Rapporterat
+                        </span>
+                        {canEdit && (
+                          <>
+                            <form
+                              action={async () => {
+                                "use server";
+                                await confirmMemberPayment(member.id, id);
+                              }}
+                            >
+                              <button
+                                type="submit"
+                                className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
+                              >
+                                Bekräfta
+                              </button>
+                            </form>
+                            <form
+                              action={async () => {
+                                "use server";
+                                await revertMemberPayment(member.id, id);
+                              }}
+                            >
+                              <button
+                                type="submit"
+                                className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                              >
+                                Ångra
+                              </button>
+                            </form>
+                          </>
+                        )}
+                      </div>
                     ) : canEdit ? (
                       <div className="flex items-center gap-2">
                         <form

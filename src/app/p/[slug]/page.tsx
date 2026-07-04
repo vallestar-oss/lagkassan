@@ -51,7 +51,7 @@ export default async function PublicPaymentPage({
 
   // Only used in the free-form fallback header ("N har redan betalt").
   const paidCount = hasRoster
-    ? members.filter((m) => m.status === "paid").length
+    ? members.filter((m) => m.status !== "unpaid").length
     : paidCountRes.count ?? 0;
 
   return (

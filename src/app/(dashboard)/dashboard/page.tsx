@@ -76,7 +76,7 @@ async function getPageData(): Promise<{
   for (const m of memberRows ?? []) {
     if (!memberMap[m.collection_id]) memberMap[m.collection_id] = { paid: 0, total: 0 };
     memberMap[m.collection_id].total++;
-    if (m.status === "paid") memberMap[m.collection_id].paid++;
+    if (m.status !== "unpaid") memberMap[m.collection_id].paid++;
   }
 
   const collections = (rawCollections ?? []).map((c) => {

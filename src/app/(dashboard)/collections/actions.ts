@@ -67,7 +67,7 @@ export async function createCollection(
       allNames.map((name) => ({
         collection_id: collection.id,
         name,
-        status: "pending",
+        status: "unpaid",
       })),
     );
   }
@@ -101,9 +101,10 @@ export async function markPaid(
   return { error: null };
 }
 
-// Treasurer marks a roster member as paid manually (cash / bank transfer).
-// Inserts a payments row so the SECURITY DEFINER trigger flips the member
-// status to 'paid' — no direct UPDATE policy needed on collection_members.
+// Treasurer records a roster member as paid manually (cash / bank transfer),
+// vouching for it directly — no self-report/confirm step needed. Inserts a
+// payments row with payment_method:'manual' so the SECURITY DEFINER trigger
+// flips the member status straight to 'confirmed_paid'.
 export async function markMemberPaid(
   memberId: string,
   memberName: string,
@@ -120,16 +121,16 @@ export async function markMemberPaid(
   ]);
   if (authError) return { error: authError };
 
-  // Fast-path: if already paid, there's nothing to do. The real guard against
-  // the race is the partial unique index idx_one_paid_per_member (below).
+  // Fast-path: only unpaid members can be marked this way. The real guard
+  // against the race is the partial unique index idx_one_paid_per_member.
   const { data: member } = await supabase
     .from("collection_members")
     .select("status")
     .eq("id", memberId)
     .single();
-  if (member?.status === "paid") {
+  if (member && member.status !== "unpaid") {
     revalidatePath(`/collections/${collectionId}`);
-    return { error: "Personen har redan betalat." };
+    return { error: "Personen är redan rapporterad eller bekräftad som betald." };
   }
 
   const { data: col } = await supabase
@@ -158,6 +159,79 @@ export async function markMemberPaid(
 
   revalidatePath(`/collections/${collectionId}`);
   return { error: error?.code === "23505" ? "Personen har redan betalat." : null };
+}
+
+// Treasurer confirms a member's self-reported payment after checking it
+// externally (e.g. against the Swish/bank statement). Only moves
+// reported_paid -> confirmed_paid; never touches an already-unpaid member.
+export async function confirmMemberPayment(
+  memberId: string,
+  collectionId: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError };
+
+  const { data: member } = await supabase
+    .from("collection_members")
+    .select("status")
+    .eq("id", memberId)
+    .eq("collection_id", collectionId)
+    .single();
+  if (!member) return { error: "Deltagaren hittades inte." };
+  if (member.status !== "reported_paid")
+    return { error: "Endast rapporterade betalningar kan bekräftas." };
+
+  const { error } = await supabase
+    .from("collection_members")
+    .update({ status: "confirmed_paid" })
+    .eq("id", memberId)
+    .eq("collection_id", collectionId);
+
+  if (error) return { error: "Kunde inte bekräfta betalningen. Försök igen." };
+
+  revalidatePath(`/collections/${collectionId}`);
+  return { error: null };
+}
+
+// Treasurer reverts a member back to unpaid — e.g. a mistaken confirmation,
+// or a self-report that turned out to be wrong.
+export async function revertMemberPayment(
+  memberId: string,
+  collectionId: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError };
+
+  const { data: member } = await supabase
+    .from("collection_members")
+    .select("status")
+    .eq("id", memberId)
+    .eq("collection_id", collectionId)
+    .single();
+  if (!member) return { error: "Deltagaren hittades inte." };
+  if (member.status === "unpaid")
+    return { error: "Personen är redan markerad som obetald." };
+
+  const { error } = await supabase
+    .from("collection_members")
+    .update({ status: "unpaid" })
+    .eq("id", memberId)
+    .eq("collection_id", collectionId);
+
+  if (error) return { error: "Kunde inte återställa statusen. Försök igen." };
+
+  revalidatePath(`/collections/${collectionId}`);
+  return { error: null };
 }
 
 // Add one or more participants to an existing active collection.
@@ -223,7 +297,7 @@ export async function addCollectionMembers(
       toInsert.map((name) => ({
         collection_id: collectionId,
         name,
-        status: "pending",
+        status: "unpaid",
       })),
     );
     if (error) return { error: "Kunde inte lägga till deltagare. Försök igen.", added: 0, skipped: [] };
@@ -255,7 +329,8 @@ export async function removeCollectionMember(
   if (col.status !== "active")
     return { error: "Det går bara att ta bort deltagare från aktiva förfrågningar." };
 
-  // Verify the member belongs to this collection and is not already paid.
+  // Verify the member belongs to this collection and is still unpaid — a
+  // reported or confirmed payment must not be silently deleted.
   const { data: member } = await supabase
     .from("collection_members")
     .select("status")
@@ -263,7 +338,8 @@ export async function removeCollectionMember(
     .eq("collection_id", collectionId)
     .single();
   if (!member) return { error: "Deltagaren hittades inte." };
-  if (member.status === "paid") return { error: "Det går inte att ta bort en deltagare som redan är markerad som betald." };
+  if (member.status !== "unpaid")
+    return { error: "Det går inte att ta bort en deltagare som har rapporterat eller fått bekräftad betalning." };
 
   const { error } = await supabase
     .from("collection_members")

@@ -157,7 +157,7 @@ export type Database = {
           collection_id: string;
           name: string;
           email: string | null;
-          status: "pending" | "paid";
+          status: "unpaid" | "reported_paid" | "confirmed_paid";
           created_at: string;
         };
         Insert: {
@@ -165,7 +165,7 @@ export type Database = {
           collection_id: string;
           name: string;
           email?: string | null;
-          status?: "pending" | "paid";
+          status?: "unpaid" | "reported_paid" | "confirmed_paid";
           created_at?: string;
         };
         Update: {
@@ -173,7 +173,7 @@ export type Database = {
           collection_id?: string;
           name?: string;
           email?: string | null;
-          status?: "pending" | "paid";
+          status?: "unpaid" | "reported_paid" | "confirmed_paid";
           created_at?: string;
         };
         Relationships: [

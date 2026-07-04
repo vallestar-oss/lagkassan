@@ -104,13 +104,13 @@ export function RosterPaymentFlow({
 
       {/* Panel — appears when a name is selected */}
       {selectedMember && (
-        selectedMember.status === "paid" ? (
+        selectedMember.status !== "unpaid" ? (
           <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-2">
             <p className="text-sm font-semibold text-text-primary">
-              {abbreviateName(selectedMember.name)} har redan betalat.
+              {abbreviateName(selectedMember.name)} har redan rapporterat betalning.
             </p>
             <p className="text-sm text-text-muted">
-              Inget mer att göra — kassören ser betalningen.
+              Inget mer att göra — kassören kontrollerar och bekräftar betalningen.
             </p>
           </div>
         ) : (
