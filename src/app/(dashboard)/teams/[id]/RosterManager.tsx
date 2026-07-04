@@ -7,6 +7,7 @@ import {
   deleteRosterMember,
   type RosterState,
 } from "../actions";
+import { getInitials } from "@/lib/utils";
 
 type Member = { id: string; name: string; phone: string | null };
 
@@ -79,15 +80,13 @@ export function RosterManager({
             </label>
           </div>
 
-          <div>
-            <button
-              type="submit"
-              disabled={isPending}
-              className="bg-accent text-white font-semibold text-sm px-4 py-2 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isPending ? "Lägger till…" : "Lägg till"}
-            </button>
-          </div>
+          <button
+            type="submit"
+            disabled={isPending}
+            className="w-full sm:w-auto sm:self-start bg-accent text-white font-semibold text-sm px-5 py-2.5 sm:py-2 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          >
+            {isPending ? "Lägger till…" : "Lägg till"}
+          </button>
         </form>
       )}
 
@@ -203,28 +202,33 @@ function RosterRow({
   }
 
   return (
-    <li className="flex items-center justify-between px-5 py-3 gap-3">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-text-primary truncate">
-          {member.name}
-        </p>
-        {member.phone && (
-          <p className="text-xs text-text-muted truncate">{member.phone}</p>
-        )}
+    <li className="flex items-center justify-between px-5 py-3 gap-3 hover:bg-surface transition-colors">
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div className="w-8 h-8 rounded-full bg-accent-light text-accent text-xs font-semibold flex items-center justify-center flex-shrink-0">
+          {getInitials(member.name)}
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-text-primary truncate">
+            {member.name}
+          </p>
+          {member.phone && (
+            <p className="text-xs text-text-muted truncate">{member.phone}</p>
+          )}
+        </div>
       </div>
       {canManage && (
         <div className="flex items-center gap-2 flex-shrink-0">
           <button
             onClick={() => setEditing(true)}
             disabled={busy}
-            className="text-xs font-medium px-2 py-1 rounded border border-surface-border text-text-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-60"
+            className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-60"
           >
             Ändra
           </button>
           <button
             onClick={remove}
             disabled={busy}
-            className="text-xs font-medium px-2 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors disabled:opacity-60"
+            className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors disabled:opacity-60"
           >
             {busy ? "…" : "Ta bort"}
           </button>

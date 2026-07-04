@@ -88,64 +88,77 @@ export default function LandingPage() {
 
       <main className="flex-1">
         {/* ── Hero ─────────────────────────────────────────────────────────── */}
-        <section className="max-w-5xl mx-auto px-6 pt-20 pb-24 text-center">
-          <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full mb-8">
-            <svg className="w-3 h-3 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
-            </svg>
-            Pilotfas — öppen för föreningar och kassörer
-          </div>
-          <h1 className="text-4xl sm:text-5xl font-bold text-text-primary leading-tight mb-6 max-w-2xl mx-auto">
-            Enklare betalningskoll för lag, föreningar och grupper
-          </h1>
-          <p className="text-lg text-text-muted leading-relaxed max-w-xl mx-auto mb-10">
-            Skapa en betalningsförfrågan, dela länken och se vem som rapporterat eller bekräftats betald.
-            Inga konton för medlemmarna — inga pengar via Lagkassan.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link
-              href="/signup"
-              className="bg-accent text-white font-semibold px-6 py-3 rounded-md hover:bg-accent-hover transition-colors"
-            >
-              Skapa konto
-            </Link>
-            <a
-              href="#hur-det-fungerar"
-              className="text-text-muted border border-surface-border bg-white font-medium px-6 py-3 rounded-md hover:border-text-muted transition-colors"
-            >
-              Se hur det fungerar
-            </a>
-          </div>
-
-          {/* Mock UI preview */}
-          <div className="mt-16 max-w-lg mx-auto bg-white rounded-lg border border-surface-border shadow-card overflow-hidden text-left">
-            <div className="bg-surface-alt border-b border-surface-border px-5 py-3 flex items-center gap-2">
-              <div className="w-2.5 h-2.5 rounded-full bg-danger/40" />
-              <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
-              <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
-              <span className="ml-2 text-xs text-text-muted">Höstterminsavgift — 300 kr</span>
-              <span className="ml-auto text-xs text-amber-600 font-medium">Demo</span>
+        <section className="relative overflow-hidden">
+          <div
+            className="pointer-events-none absolute inset-0 -z-10"
+            style={{
+              background:
+                "radial-gradient(600px circle at 50% 0%, var(--color-accent-light), transparent 70%)",
+            }}
+          />
+          <div className="max-w-5xl mx-auto px-6 pt-20 pb-24 text-center">
+            <div className="inline-flex items-center gap-2 bg-amber-50 border border-amber-200 text-amber-800 text-xs font-semibold px-3 py-1 rounded-full mb-8">
+              <svg className="w-3 h-3 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
+              </svg>
+              Pilotfas — öppen för föreningar och kassörer
             </div>
-            <div className="divide-y divide-surface-border">
-              {[
-                { name: "Anna Lindqvist", status: "paid" },
-                { name: "Erik Johansson", status: "paid" },
-                { name: "Maria Svensson", status: "pending" },
-                { name: "Lars Pettersson", status: "pending" },
-              ].map((p) => (
-                <div key={p.name} className="flex items-center justify-between px-5 py-3">
-                  <span className="text-sm text-text-primary">{p.name}</span>
-                  <span
-                    className={`text-xs font-medium px-2 py-0.5 rounded ${
-                      p.status === "paid"
-                        ? "bg-success-light text-success"
-                        : "bg-surface-alt text-text-muted"
-                    }`}
-                  >
-                    {p.status === "paid" ? "Betald" : "Ej betald"}
-                  </span>
-                </div>
-              ))}
+            <h1 className="text-4xl sm:text-5xl font-bold text-text-primary leading-tight mb-6 max-w-2xl mx-auto tracking-tight">
+              Enklare betalningskoll för lag, föreningar och grupper
+            </h1>
+            <p className="text-lg text-text-muted leading-relaxed max-w-xl mx-auto mb-10">
+              Skapa en betalningsförfrågan, dela länken och se vem som rapporterat eller bekräftats betald.
+              Inga konton för medlemmarna — inga pengar via Lagkassan.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href="/signup"
+                className="bg-accent text-white font-semibold px-6 py-3 rounded-md hover:bg-accent-hover transition-colors shadow-sm"
+              >
+                Skapa konto
+              </Link>
+              <a
+                href="#hur-det-fungerar"
+                className="text-text-muted border border-surface-border bg-white font-medium px-6 py-3 rounded-md hover:border-text-muted transition-colors"
+              >
+                Se hur det fungerar
+              </a>
+            </div>
+
+            {/* Mock UI preview — mirrors the real three-state status model */}
+            <div className="mt-16 max-w-lg mx-auto bg-white rounded-lg border border-surface-border shadow-md overflow-hidden text-left">
+              <div className="bg-surface-alt border-b border-surface-border px-5 py-3 flex items-center gap-2">
+                <div className="w-2.5 h-2.5 rounded-full bg-danger/40" />
+                <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
+                <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
+                <span className="ml-2 text-xs text-text-muted">Höstterminsavgift — 300 kr</span>
+              </div>
+              <div className="divide-y divide-surface-border">
+                {[
+                  { name: "Anna Lindqvist", status: "confirmed_paid" },
+                  { name: "Erik Johansson", status: "reported_paid" },
+                  { name: "Maria Svensson", status: "unpaid" },
+                ].map((p) => (
+                  <div key={p.name} className="flex items-center justify-between px-5 py-3">
+                    <span className="text-sm text-text-primary">{p.name}</span>
+                    <span
+                      className={`text-xs font-medium px-2.5 py-1 rounded-full border ${
+                        p.status === "confirmed_paid"
+                          ? "bg-success-light text-success border-success/20"
+                          : p.status === "reported_paid"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : "bg-surface-alt text-text-muted border-surface-border"
+                      }`}
+                    >
+                      {p.status === "confirmed_paid"
+                        ? "Bekräftat av kassör"
+                        : p.status === "reported_paid"
+                        ? "Rapporterat betalt"
+                        : "Ej betald"}
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </section>
