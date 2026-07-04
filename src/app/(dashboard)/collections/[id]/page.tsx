@@ -166,9 +166,14 @@ export default async function CollectionDetailPage({
       </div>
 
       {/* Pilot disclaimer */}
-      <p className="text-xs text-text-muted">
-        Lagkassan hanterar inte själva betalningen ännu. Kontrollera markerade betalningar mot Swish eller bank.
-      </p>
+      <div className="flex items-start gap-2 bg-surface-alt border border-surface-border rounded-lg px-4 py-3">
+        <svg className="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+        </svg>
+        <p className="text-xs text-text-muted leading-relaxed">
+          Lagkassan hanterar inte betalningar. Kontrollera rapporterade betalningar mot Swish eller bank innan du bekräftar.
+        </p>
+      </div>
 
       {/* Member / payment list */}
       <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
@@ -199,8 +204,8 @@ export default async function CollectionDetailPage({
                     </span>
                     {member.status === "confirmed_paid" ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-success-light text-success">
-                          Bekräftat
+                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-success-light text-success border border-success/20">
+                          Bekräftat av kassör
                         </span>
                         {canEdit && (
                           <form
@@ -211,7 +216,7 @@ export default async function CollectionDetailPage({
                           >
                             <button
                               type="submit"
-                              className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                              className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
                             >
                               Ångra
                             </button>
@@ -220,8 +225,8 @@ export default async function CollectionDetailPage({
                       </div>
                     ) : member.status === "reported_paid" ? (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium px-2 py-0.5 rounded bg-warning/10 text-warning">
-                          Rapporterat
+                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                          Rapporterat betalt
                         </span>
                         {canEdit && (
                           <>
@@ -233,7 +238,7 @@ export default async function CollectionDetailPage({
                             >
                               <button
                                 type="submit"
-                                className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
+                                className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
                               >
                                 Bekräfta
                               </button>
@@ -246,7 +251,7 @@ export default async function CollectionDetailPage({
                             >
                               <button
                                 type="submit"
-                                className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                                className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
                               >
                                 Ångra
                               </button>
@@ -256,6 +261,9 @@ export default async function CollectionDetailPage({
                       </div>
                     ) : canEdit ? (
                       <div className="flex items-center gap-2">
+                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-surface-alt text-text-muted border border-surface-border">
+                          Ej betald
+                        </span>
                         <form
                           action={async () => {
                             "use server";
@@ -264,7 +272,7 @@ export default async function CollectionDetailPage({
                         >
                           <button
                             type="submit"
-                            className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
+                            className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
                           >
                             Markera betald
                           </button>
@@ -278,7 +286,7 @@ export default async function CollectionDetailPage({
                           >
                             <button
                               type="submit"
-                              className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                              className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
                               aria-label={`Ta bort ${member.name}`}
                             >
                               Ta bort
@@ -287,8 +295,8 @@ export default async function CollectionDetailPage({
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-surface-alt text-text-muted">
-                        Väntar
+                      <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-surface-alt text-text-muted border border-surface-border">
+                        Ej betald
                       </span>
                     )}
                   </div>

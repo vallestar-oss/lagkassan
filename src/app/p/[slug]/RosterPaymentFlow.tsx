@@ -26,12 +26,10 @@ export function RosterPaymentFlow({
   collectionId,
   amount,
   members,
-  hasInstructions,
 }: {
   collectionId: string;
   amount: number;
   members: Member[];
-  hasInstructions?: boolean;
 }) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [state, action, isPending] = useActionState(submitMockPayment, initial);
@@ -45,21 +43,10 @@ export function RosterPaymentFlow({
           <IconCheck className="w-6 h-6 text-success" />
         </div>
         <div>
-          {hasInstructions ? (
-            <>
-              <p className="font-semibold text-text-primary">Tack!</p>
-              <p className="text-sm text-text-muted mt-1">
-                Din betalning har markerats som gjord. Kassören behöver fortfarande kontrollera betalningen.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="font-semibold text-text-primary">Simulerad betalning registrerad!</p>
-              <p className="text-sm text-text-muted mt-1">
-                Betalningen är markerad som genomförd i demoläget. Inga riktiga pengar har dragits.
-              </p>
-            </>
-          )}
+          <p className="font-semibold text-text-primary">Tack!</p>
+          <p className="text-sm text-text-muted mt-1">
+            Din betalning är rapporterad. Kassören kontrollerar mot Swish eller bank och bekräftar.
+          </p>
         </div>
       </div>
     );
@@ -76,6 +63,7 @@ export function RosterPaymentFlow({
         <ul className="divide-y divide-surface-border">
           {members.map((m) => {
             const isSelected = m.id === selectedId;
+            const isPaid = m.status !== "unpaid";
             return (
               <li key={m.id}>
                 <button
@@ -87,14 +75,22 @@ export function RosterPaymentFlow({
                 >
                   <span
                     className={`text-sm font-medium ${
-                      isSelected ? "text-accent" : "text-text-primary"
+                      isSelected ? "text-accent" : isPaid ? "text-text-muted" : "text-text-primary"
                     }`}
                   >
                     {abbreviateName(m.name)}
                   </span>
-                  {isSelected && (
+                  {isSelected ? (
                     <span className="text-xs font-medium text-accent">Vald ↓</span>
-                  )}
+                  ) : m.status === "confirmed_paid" ? (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success-light text-success border border-success/20">
+                      Bekräftat av kassör
+                    </span>
+                  ) : m.status === "reported_paid" ? (
+                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                      Rapporterat betalt
+                    </span>
+                  ) : null}
                 </button>
               </li>
             );
@@ -106,11 +102,24 @@ export function RosterPaymentFlow({
       {selectedMember && (
         selectedMember.status !== "unpaid" ? (
           <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-2">
-            <p className="text-sm font-semibold text-text-primary">
-              {abbreviateName(selectedMember.name)} har redan rapporterat betalning.
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-text-primary">
+                {abbreviateName(selectedMember.name)}
+              </p>
+              {selectedMember.status === "confirmed_paid" ? (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success-light text-success border border-success/20">
+                  Bekräftat av kassör
+                </span>
+              ) : (
+                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                  Rapporterat betalt
+                </span>
+              )}
+            </div>
             <p className="text-sm text-text-muted">
-              Inget mer att göra — kassören kontrollerar och bekräftar betalningen.
+              {selectedMember.status === "confirmed_paid"
+                ? "Kassören har bekräftat betalningen. Klart!"
+                : "Betalningen är rapporterad — kassören kontrollerar mot Swish eller bank."}
             </p>
           </div>
         ) : (
@@ -156,15 +165,11 @@ export function RosterPaymentFlow({
             >
               {isPending
                 ? "Registrerar…"
-                : hasInstructions
-                ? `Jag har betalat enligt instruktionerna — ${formatOre(amount)}`
-                : `Markera som betald (demo) — ${formatOre(amount)}`}
+                : `Jag har betalat — ${formatOre(amount)}`}
             </button>
 
             <p className="text-xs text-center text-text-muted">
-              {hasInstructions
-                ? "Lagkassan hanterar inte betalningen — kassören kontrollerar manuellt."
-                : "Demoläge — inga pengar dras och inga kortuppgifter hanteras."}
+              Lagkassan hanterar inga pengar. Betalningen sker via Swish eller bank.
             </p>
           </form>
         )
