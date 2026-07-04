@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { formatOre, formatSwedishDate } from "@/lib/utils";
+import { formatOre, formatSwedishDate, formatSwedishDateTime } from "@/lib/utils";
 import {
   markPaid,
   markMemberPaid,
@@ -46,10 +46,10 @@ export default async function CollectionDetailPage({
   // .returns<> is needed because the generated types predate the status column.
   const { data: memberRows } = await supabase
     .from("collection_members")
-    .select("id, name, status")
+    .select("id, name, status, reported_at, confirmed_at")
     .eq("collection_id", id)
     .order("name", { ascending: true })
-    .returns<{ id: string; name: string; status: string }[]>();
+    .returns<{ id: string; name: string; status: string; reported_at: string | null; confirmed_at: string | null }[]>();
 
   const rosterMembers = memberRows ?? [];
   const hasRoster = rosterMembers.length > 0;
@@ -203,46 +203,12 @@ export default async function CollectionDetailPage({
                       {formatOre(collection.amount)}
                     </span>
                     {member.status === "confirmed_paid" ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-success-light text-success border border-success/20">
-                          Bekräftat av kassör
-                        </span>
-                        {canEdit && (
-                          <form
-                            action={async () => {
-                              "use server";
-                              await revertMemberPayment(member.id, id);
-                            }}
-                          >
-                            <button
-                              type="submit"
-                              className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
-                            >
-                              Ångra
-                            </button>
-                          </form>
-                        )}
-                      </div>
-                    ) : member.status === "reported_paid" ? (
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                          Rapporterat betalt
-                        </span>
-                        {canEdit && (
-                          <>
-                            <form
-                              action={async () => {
-                                "use server";
-                                await confirmMemberPayment(member.id, id);
-                              }}
-                            >
-                              <button
-                                type="submit"
-                                className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
-                              >
-                                Bekräfta
-                              </button>
-                            </form>
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-success-light text-success border border-success/20">
+                            Bekräftat av kassör
+                          </span>
+                          {canEdit && (
                             <form
                               action={async () => {
                                 "use server";
@@ -256,7 +222,60 @@ export default async function CollectionDetailPage({
                                 Ångra
                               </button>
                             </form>
-                          </>
+                          )}
+                        </div>
+                        {member.confirmed_at && (
+                          <p className="text-xs text-text-muted">
+                            Bekräftat: {formatSwedishDateTime(member.confirmed_at)}
+                          </p>
+                        )}
+                        {member.reported_at && (
+                          <p className="text-xs text-text-muted">
+                            Rapporterat: {formatSwedishDateTime(member.reported_at)}
+                          </p>
+                        )}
+                      </div>
+                    ) : member.status === "reported_paid" ? (
+                      <div className="flex flex-col items-end gap-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-medium px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                            Rapporterat betalt
+                          </span>
+                          {canEdit && (
+                            <>
+                              <form
+                                action={async () => {
+                                  "use server";
+                                  await confirmMemberPayment(member.id, id);
+                                }}
+                              >
+                                <button
+                                  type="submit"
+                                  className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
+                                >
+                                  Bekräfta
+                                </button>
+                              </form>
+                              <form
+                                action={async () => {
+                                  "use server";
+                                  await revertMemberPayment(member.id, id);
+                                }}
+                              >
+                                <button
+                                  type="submit"
+                                  className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                                >
+                                  Ångra
+                                </button>
+                              </form>
+                            </>
+                          )}
+                        </div>
+                        {member.reported_at && (
+                          <p className="text-xs text-text-muted">
+                            Rapporterat: {formatSwedishDateTime(member.reported_at)}
+                          </p>
                         )}
                       </div>
                     ) : canEdit ? (

@@ -158,6 +158,9 @@ export type Database = {
           name: string;
           email: string | null;
           status: "unpaid" | "reported_paid" | "confirmed_paid";
+          reported_at: string | null;
+          confirmed_at: string | null;
+          confirmed_by: string | null;
           created_at: string;
         };
         Insert: {
@@ -166,6 +169,9 @@ export type Database = {
           name: string;
           email?: string | null;
           status?: "unpaid" | "reported_paid" | "confirmed_paid";
+          reported_at?: string | null;
+          confirmed_at?: string | null;
+          confirmed_by?: string | null;
           created_at?: string;
         };
         Update: {
@@ -174,6 +180,9 @@ export type Database = {
           name?: string;
           email?: string | null;
           status?: "unpaid" | "reported_paid" | "confirmed_paid";
+          reported_at?: string | null;
+          confirmed_at?: string | null;
+          confirmed_by?: string | null;
           created_at?: string;
         };
         Relationships: [

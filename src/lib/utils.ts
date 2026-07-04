@@ -21,6 +21,15 @@ export function formatSwedishDate(dateStr: string): string {
   });
 }
 
+export function formatSwedishDateTime(isoString: string): string {
+  return new Date(isoString).toLocaleString("sv-SE", {
+    day: "numeric",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export function getInitials(name: string): string {
   return name
     .split(" ")

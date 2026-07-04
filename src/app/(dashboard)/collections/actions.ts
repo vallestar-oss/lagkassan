@@ -116,7 +116,7 @@ export async function markMemberPaid(
   // Defense-in-depth: the payments RLS allows public inserts, so verify the
   // caller is an owner/treasurer of this collection's team before inserting a
   // manual 'paid' payment on a member's behalf.
-  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { user, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -157,9 +157,23 @@ export async function markMemberPaid(
   // already paid, so surface a friendly message instead of a 500.
   if (error && error.code !== "23505")
     return { error: "Kunde inte registrera betalningen. Försök igen." };
+  if (error?.code === "23505") {
+    revalidatePath(`/collections/${collectionId}`);
+    return { error: "Personen har redan betalat." };
+  }
+
+  // Trigger (SECURITY DEFINER) already set confirmed_at. Set confirmed_by here
+  // since auth.uid() is unreliable inside a SECURITY DEFINER function.
+  if (user) {
+    await supabase
+      .from("collection_members")
+      .update({ confirmed_by: user.id })
+      .eq("id", memberId)
+      .eq("collection_id", collectionId);
+  }
 
   revalidatePath(`/collections/${collectionId}`);
-  return { error: error?.code === "23505" ? "Personen har redan betalat." : null };
+  return { error: null };
 }
 
 // Treasurer confirms a member's self-reported payment after checking it
@@ -171,7 +185,7 @@ export async function confirmMemberPayment(
 ): Promise<{ error: string | null }> {
   const supabase = await createClient();
 
-  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+  const { user, error: authError } = await assertCollectionRole(supabase, collectionId, [
     "owner",
     "treasurer",
   ]);
@@ -189,7 +203,11 @@ export async function confirmMemberPayment(
 
   const { error } = await supabase
     .from("collection_members")
-    .update({ status: "confirmed_paid" })
+    .update({
+      status: "confirmed_paid",
+      confirmed_at: new Date().toISOString(),
+      confirmed_by: user?.id ?? null,
+    })
     .eq("id", memberId)
     .eq("collection_id", collectionId);
 
@@ -225,20 +243,20 @@ export async function revertMemberPayment(
     return { error: "Personen är redan markerad som obetald." };
 
   if (member.status === "confirmed_paid") {
-    // Step back to reported — the self-report payment row is still valid.
+    // Step back to reported — clear confirm timestamps, keep reported_at.
     const { error } = await supabase
       .from("collection_members")
-      .update({ status: "reported_paid" })
+      .update({ status: "reported_paid", confirmed_at: null, confirmed_by: null })
       .eq("id", memberId)
       .eq("collection_id", collectionId);
     if (error) return { error: "Kunde inte återställa statusen. Försök igen." };
   } else {
-    // reported_paid → unpaid: also delete the payment row so the member can
-    // self-report again. No treasurer DELETE policy exists on payments, so we
-    // use the admin (service-role) client which bypasses RLS.
+    // reported_paid → unpaid: clear all timestamps and delete the payment row
+    // so the member can self-report again. No treasurer DELETE policy exists on
+    // payments, so we use the admin (service-role) client which bypasses RLS.
     const { error: memberError } = await supabase
       .from("collection_members")
-      .update({ status: "unpaid" })
+      .update({ status: "unpaid", reported_at: null, confirmed_at: null, confirmed_by: null })
       .eq("id", memberId)
       .eq("collection_id", collectionId);
     if (memberError) return { error: "Kunde inte återställa statusen. Försök igen." };
