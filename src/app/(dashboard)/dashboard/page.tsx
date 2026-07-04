@@ -17,7 +17,7 @@ async function getPageData(): Promise<{
   collections: {
     id: string; title: string; amount: number; deadline: string | null;
     status: string; slug: string; paid_count: number; total_count: number;
-    team_name: string;
+    team_name: string; group_label: string | null;
   }[];
 } | null> {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL) return null;
@@ -43,7 +43,7 @@ async function getPageData(): Promise<{
   const teamIds = teams.map((t) => t.id);
   const { data: rawCollections } = await supabase
     .from("collections")
-    .select("id, title, amount, deadline, status, slug, team_id, teams(name)")
+    .select("id, title, amount, deadline, status, slug, group_label, team_id, teams(name)")
     .in("team_id", teamIds)
     .order("created_at", { ascending: false });
 
@@ -90,6 +90,7 @@ async function getPageData(): Promise<{
       status: c.status,
       slug: c.slug,
       team_name: (c.teams as { name: string } | null)?.name ?? "",
+      group_label: (c as { group_label?: string | null }).group_label ?? null,
       paid_count: counts.paid,
       total_count: counts.total,
     };
@@ -214,7 +215,7 @@ function CollectionCard({
 }: {
   collection: {
     id: string; title: string; amount: number; deadline: string | null;
-    status: string; paid_count: number; total_count: number; team_name: string;
+    status: string; paid_count: number; total_count: number; team_name: string; group_label: string | null;
   };
 }) {
   const pct =
@@ -232,6 +233,9 @@ function CollectionCard({
           {collection.title}
         </p>
         <p className="text-xs text-text-muted mt-0.5">
+          {collection.group_label && (
+            <span className="font-medium text-text-primary">{collection.group_label} · </span>
+          )}
           {formatOre(collection.amount)}
           {collection.deadline && (
             <> · {formatSwedishDate(collection.deadline)}</>

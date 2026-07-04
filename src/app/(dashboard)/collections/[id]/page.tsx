@@ -100,6 +100,9 @@ export default async function CollectionDetailPage({
           <h1 className="text-2xl font-bold text-text-primary">{collection.title}</h1>
           <p className="text-sm text-text-muted mt-0.5">
             {teamName}
+            {collection.group_label && (
+              <> · <span className="text-text-primary font-medium">{collection.group_label}</span></>
+            )}
             {collection.deadline && (
               <> · Sista dag: {formatSwedishDate(collection.deadline)}</>
             )}

@@ -104,6 +104,22 @@ export function CollectionForm({
 
         <label className="flex flex-col gap-1.5">
           <span className="text-sm font-medium text-text-primary">
+            Lag / grupp{" "}
+            <span className="text-text-muted font-normal">(valfritt)</span>
+          </span>
+          <input
+            name="group_label"
+            type="text"
+            placeholder="t.ex. Pojkar 2012, Flickor 2014, Seniorlaget"
+            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+          />
+          <p className="text-xs text-text-muted">
+            Hjälper dig hålla koll om föreningen har flera lag, årskullar eller sektioner.
+          </p>
+        </label>
+
+        <label className="flex flex-col gap-1.5">
+          <span className="text-sm font-medium text-text-primary">
             Beskrivning{" "}
             <span className="text-text-muted font-normal">(valfritt)</span>
           </span>

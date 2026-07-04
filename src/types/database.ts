@@ -101,6 +101,7 @@ export type Database = {
           title: string;
           description: string | null;
           payment_instructions: string | null;
+          group_label: string | null;
           amount: number;
           deadline: string | null;
           slug: string;
@@ -114,6 +115,7 @@ export type Database = {
           title: string;
           description?: string | null;
           payment_instructions?: string | null;
+          group_label?: string | null;
           amount: number;
           deadline?: string | null;
           slug?: string;
@@ -127,6 +129,7 @@ export type Database = {
           title?: string;
           description?: string | null;
           payment_instructions?: string | null;
+          group_label?: string | null;
           amount?: number;
           deadline?: string | null;
           slug?: string;
