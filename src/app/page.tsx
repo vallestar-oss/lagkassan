@@ -90,7 +90,7 @@ export default function LandingPage() {
             <svg className="w-3 h-3 text-amber-500" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z" />
             </svg>
-            Demoprojekt — betalningar är simulerade
+            Pilotfas — öppen för föreningar och kassörer
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-text-primary leading-tight mb-6 max-w-2xl mx-auto">
             Samla in föreningsavgifter — utan krångel
@@ -219,8 +219,8 @@ export default function LandingPage() {
               },
               {
                 icon: <IconBolt className="w-5 h-5" />,
-                title: "Simulerade betalningar (demoprojekt)",
-                body: "Betalningar är simulerade i detta demoprojekt — inga riktiga pengar hanteras. Flödet visar hur en riktig integration skulle fungera.",
+                title: "Swish eller bank — du bestämmer",
+                body: "Lagkassan hanterar inte själva betalningen ännu. Du anger betalningsinstruktioner (t.ex. Swish-nummer), medlemmen betalar externt och markerar sedan att den är gjord. Kassören kontrollerar mot kontoutdraget.",
               },
             ].map((f) => (
               <div key={f.title} className="bg-white rounded-lg border border-surface-border p-6 shadow-card flex gap-4">
@@ -265,47 +265,40 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* ── Demo notice ───────────────────────────────────────────────────── */}
+        {/* ── Pilot CTA ─────────────────────────────────────────────────────── */}
         <section className="max-w-5xl mx-auto px-6 py-20">
-          <div className="max-w-2xl mx-auto bg-amber-50 border border-amber-200 rounded-lg p-8">
-            <h2 className="text-xl font-bold text-text-primary mb-3">
-              Det här är ett demoprojekt
+          <div className="max-w-2xl mx-auto bg-white border border-surface-border rounded-lg p-8 shadow-card">
+            <div className="inline-flex items-center gap-2 bg-accent-light text-accent text-xs font-semibold px-3 py-1 rounded-full mb-6">
+              Pilotfas
+            </div>
+            <h2 className="text-2xl font-bold text-text-primary mb-3">
+              Vill du testa Lagkassan med ditt lag?
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-6">
-              Lagkassan är ett portfolioprojekt som visar hur en avgiftshanteringstjänst för föreningar kan byggas med Next.js, Supabase och Server Actions. Betalningarna är simulerade — inga riktiga pengar hanteras och inga kortuppgifter samlas in.
+              Lagkassan är i aktiv pilotfas och söker föreningar, lag och kassörer som vill prova. Skapa ett konto, lägg upp en riktig betalningsförfrågan och dela länken med dina medlemmar — redan idag.
             </p>
-            <h3 className="text-sm font-semibold text-text-primary mb-3">Vad som är byggt</h3>
-            <ul className="flex flex-col gap-2 mb-6">
-              {[
-                "Autentisering och teamhantering",
-                "Skapande av betalningsförfrågningar med namnlista",
-                "Publik betalningslänk — inga konton krävs för betalaren",
-                "Simulerat betalningsflöde med betald/obetald-status",
-                "Skydd mot dubbelbetalning på databasnivå",
-                "Rollbaserad åtkomstkontroll via Row-Level Security",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-text-muted">
-                  <IconCheck className="w-4 h-4 mt-0.5 text-success flex-shrink-0" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <h3 className="text-sm font-semibold text-text-primary mb-3">Planerat nästa steg</h3>
-            <ul className="flex flex-col gap-2">
-              {[
-                "Stripe-integration med webhook-verifierad betald-status",
-                "E-postkvitto efter genomförd betalning",
-                "Påminnelseutskick till ej betalda",
-                "CSV-export av betalstatus per förfrågan",
-              ].map((item) => (
-                <li key={item} className="flex items-start gap-2 text-sm text-text-muted">
-                  <svg className="w-4 h-4 mt-0.5 text-text-muted flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-                  </svg>
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <div className="bg-surface rounded-lg border border-surface-border p-4 mb-6">
+              <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">Hur betalningar fungerar i piloten</p>
+              <ul className="flex flex-col gap-2">
+                {[
+                  "Du anger betalningsinstruktioner — t.ex. Swish-nummer eller bankgiro",
+                  "Medlemmen betalar externt och markerar sedan att betalningen är gjord",
+                  "Kassören ser vem som markerat sig som betald och kontrollerar mot kontoutdraget",
+                  "Lagkassan hanterar inte pengar — ingen kortinformation samlas in",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-text-muted">
+                    <IconCheck className="w-4 h-4 mt-0.5 text-success flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Link
+              href="/signup"
+              className="inline-block bg-accent text-white font-semibold px-5 py-2.5 rounded-md hover:bg-accent-hover transition-colors text-sm"
+            >
+              Skapa konto och kom igång
+            </Link>
           </div>
         </section>
 
@@ -313,15 +306,15 @@ export default function LandingPage() {
         <section className="bg-surface-alt border-t border-surface-border py-20">
           <div className="max-w-5xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-text-primary mb-2">Vanliga frågor</h2>
-            <p className="text-text-muted mb-10">Om projektet och hur flödet fungerar.</p>
+            <p className="text-text-muted mb-10">Om tjänsten och hur flödet fungerar.</p>
             <div className="max-w-2xl">
               <FaqItem
                 q="Behöver mina medlemmar registrera ett konto?"
                 a="Nej. De klickar på länken, väljer sitt namn i listan och markerar betalningen. Inget konto, ingen nedladdning, ingen app."
               />
               <FaqItem
-                q="Är betalningarna riktiga?"
-                a="Nej — det här är ett demoprojekt. Betalningarna är simulerade och inga pengar dras. Flödet demonstrerar hur en riktig integration med Stripe skulle se ut."
+                q="Hanterar Lagkassan mina pengar?"
+                a="Nej. Lagkassan hanterar inte pengar och samlar inte in kortuppgifter. Du anger egna betalningsinstruktioner — t.ex. Swish-nummer eller bankgiro — och medlemmarna betalar direkt till dig via sin bank. I Lagkassan markerar de sedan att betalningen är gjord, och du kontrollerar mot kontoutdraget."
               />
               <FaqItem
                 q="Varför väljer medlemmen sitt namn från en lista?"
@@ -343,10 +336,10 @@ export default function LandingPage() {
         <section className="bg-accent py-16">
           <div className="max-w-5xl mx-auto px-6 text-center">
             <h2 className="text-2xl font-bold text-white mb-3">
-              Testa demot själv
+              Redo att testa med ditt lag?
             </h2>
             <p className="text-white/80 mb-8">
-              Skapa ett konto, lägg upp en betalningsförfrågan och se flödet från kassörens perspektiv.
+              Skapa ett konto, lägg upp en riktig förfrågan och se hur enkelt det blir för kassören att hålla koll.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
@@ -370,7 +363,7 @@ export default function LandingPage() {
       <footer className="border-t border-surface-border bg-surface py-8">
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-text-muted">
           <span className="font-semibold text-text-primary">Lagkassan</span>
-          <p>Portfolioprojekt — simulerade betalningar, inga riktiga transaktioner.</p>
+          <p>Pilotfas — Lagkassan hanterar inte pengar. Betalningar sker via Swish eller bank.</p>
         </div>
       </footer>
     </div>
