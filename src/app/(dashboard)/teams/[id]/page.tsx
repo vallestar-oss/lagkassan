@@ -2,6 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { RosterManager } from "./RosterManager";
+import { CollectionCard, type CollectionCardData } from "../../CollectionCard";
 
 export default async function TeamPage({
   params,
@@ -39,6 +40,59 @@ export default async function TeamPage({
     .eq("team_id", id)
     .order("name", { ascending: true });
 
+  // This team's collections only — never mixed with other teams.
+  const { data: rawCollections } = await supabase
+    .from("collections")
+    .select("id, title, amount, deadline, status, slug, group_label")
+    .eq("team_id", id)
+    .order("created_at", { ascending: false });
+
+  const collectionIds = (rawCollections ?? []).map((c) => c.id);
+
+  const [{ data: payments }, { data: memberRows }] = await Promise.all([
+    collectionIds.length
+      ? supabase.from("payments").select("collection_id, status").in("collection_id", collectionIds)
+      : { data: [] },
+    collectionIds.length
+      ? supabase
+          .from("collection_members")
+          .select("collection_id, status")
+          .in("collection_id", collectionIds)
+          .returns<{ collection_id: string; status: string }[]>()
+      : { data: [] as { collection_id: string; status: string }[] },
+  ]);
+
+  const paymentMap: Record<string, { paid: number; total: number }> = {};
+  for (const p of payments ?? []) {
+    if (!paymentMap[p.collection_id]) paymentMap[p.collection_id] = { paid: 0, total: 0 };
+    paymentMap[p.collection_id].total++;
+    if (p.status === "paid") paymentMap[p.collection_id].paid++;
+  }
+
+  const memberMap: Record<string, { paid: number; total: number }> = {};
+  for (const m of memberRows ?? []) {
+    if (!memberMap[m.collection_id]) memberMap[m.collection_id] = { paid: 0, total: 0 };
+    memberMap[m.collection_id].total++;
+    if (m.status !== "unpaid") memberMap[m.collection_id].paid++;
+  }
+
+  const collections: CollectionCardData[] = (rawCollections ?? []).map((c) => {
+    const counts = memberMap[c.id]?.total ? memberMap[c.id] : (paymentMap[c.id] ?? { paid: 0, total: 0 });
+    return {
+      id: c.id,
+      title: c.title,
+      amount: c.amount,
+      deadline: c.deadline,
+      status: c.status,
+      group_label: c.group_label,
+      paid_count: counts.paid,
+      total_count: counts.total,
+    };
+  });
+
+  const activeCollections = collections.filter((c) => c.status === "active");
+  const closedCollections = collections.filter((c) => c.status !== "active");
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <div>
@@ -46,20 +100,75 @@ export default async function TeamPage({
           href="/dashboard"
           className="text-sm text-text-muted hover:text-text-primary transition-colors"
         >
-          ← Dashboard
+          ← Översikt
         </Link>
-        <h1 className="text-2xl font-bold text-text-primary mt-1">{team.name}</h1>
+        <div className="flex items-center justify-between gap-4 mt-1">
+          <h1 className="text-2xl font-bold text-text-primary">{team.name}</h1>
+          <Link
+            href={`/collections/new?team=${team.id}`}
+            className="flex items-center gap-2 bg-accent text-white text-sm font-semibold px-4 py-2.5 rounded-md hover:bg-accent-hover transition-colors flex-shrink-0"
+          >
+            + Ny förfrågan
+          </Link>
+        </div>
         <p className="text-sm text-text-muted mt-0.5">
-          Medlemmar i föreningen — namnen används som standard när du skapar en
-          ny betalningsförfrågan.
+          <a href="#medlemmar" className="text-accent hover:underline">
+            Hantera medlemmar
+          </a>
         </p>
       </div>
 
-      <RosterManager
-        teamId={team.id}
-        members={roster ?? []}
-        canManage={canManage}
-      />
+      {/* Insamlingar — this team's collections only */}
+      <section>
+        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+          Insamlingar
+        </p>
+
+        {collections.length === 0 ? (
+          <div className="border border-surface-border border-dashed rounded-lg bg-white p-10 flex flex-col items-center text-center gap-3">
+            <p className="font-semibold text-text-primary">
+              Inga insamlingar för det här laget ännu
+            </p>
+            <Link
+              href={`/collections/new?team=${team.id}`}
+              className="text-sm font-medium text-accent hover:underline"
+            >
+              Skapa första förfrågan →
+            </Link>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-6">
+            {activeCollections.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-text-muted">Aktiva ({activeCollections.length})</p>
+                {activeCollections.map((c) => (
+                  <CollectionCard key={c.id} collection={c} />
+                ))}
+              </div>
+            )}
+            {closedCollections.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-text-muted">Avslutade ({closedCollections.length})</p>
+                {closedCollections.map((c) => (
+                  <CollectionCard key={c.id} collection={c} />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* Medlemmar */}
+      <div id="medlemmar" className="flex flex-col gap-3 scroll-mt-6">
+        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
+          Medlemmar
+        </p>
+        <RosterManager
+          teamId={team.id}
+          members={roster ?? []}
+          canManage={canManage}
+        />
+      </div>
     </div>
   );
 }

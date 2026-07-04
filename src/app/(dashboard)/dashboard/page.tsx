@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
-import { formatOre, formatSwedishDate } from "@/lib/utils";
+import { CollectionCard } from "../CollectionCard";
 
 function IconPlus() {
   return (
@@ -128,6 +128,9 @@ export default async function DashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
+            Global översikt
+          </p>
           <h1 className="text-2xl font-bold text-text-primary">
             Välkommen, {firstName}!
           </h1>
@@ -169,7 +172,7 @@ export default async function DashboardPage() {
           </p>
           <div className="flex flex-col gap-3">
             {activeCollections.map((c) => (
-              <CollectionCard key={c.id} collection={c} />
+              <CollectionCard key={c.id} collection={c} showTeamName />
             ))}
           </div>
         </section>
@@ -201,53 +204,11 @@ export default async function DashboardPage() {
           </p>
           <div className="flex flex-col gap-3">
             {closedCollections.map((c) => (
-              <CollectionCard key={c.id} collection={c} />
+              <CollectionCard key={c.id} collection={c} showTeamName />
             ))}
           </div>
         </section>
       )}
     </div>
-  );
-}
-
-function CollectionCard({
-  collection,
-}: {
-  collection: {
-    id: string; title: string; amount: number; deadline: string | null;
-    status: string; paid_count: number; total_count: number; team_name: string; group_label: string | null;
-  };
-}) {
-  const pct =
-    collection.total_count > 0
-      ? Math.round((collection.paid_count / collection.total_count) * 100)
-      : 0;
-
-  return (
-    <Link
-      href={`/collections/${collection.id}`}
-      className="bg-white border border-surface-border rounded-lg px-5 py-4 shadow-card flex items-center justify-between gap-4 hover:border-accent/40 transition-colors group"
-    >
-      <div className="flex-1 min-w-0">
-        <p className="font-semibold text-text-primary truncate group-hover:text-accent transition-colors">
-          {collection.title}
-        </p>
-        <p className="text-xs text-text-muted mt-0.5">
-          {collection.group_label && (
-            <span className="font-medium text-text-primary">{collection.group_label} · </span>
-          )}
-          {formatOre(collection.amount)}
-          {collection.deadline && (
-            <> · {formatSwedishDate(collection.deadline)}</>
-          )}
-        </p>
-      </div>
-      <div className="text-right flex-shrink-0">
-        <p className="text-sm font-bold font-mono text-text-primary">
-          {collection.paid_count}/{collection.total_count}
-        </p>
-        <p className="text-xs text-text-muted">{pct}% markerat</p>
-      </div>
-    </Link>
   );
 }

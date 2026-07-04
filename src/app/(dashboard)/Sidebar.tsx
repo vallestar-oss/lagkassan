@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 type Team = { id: string; name: string };
 
 export function Sidebar({ teams }: { teams: Team[] }) {
+  const pathname = usePathname();
+
   return (
     <aside className="w-60 flex-shrink-0 border-r border-surface-border bg-white hidden md:flex md:flex-col">
       <div className="h-14 flex items-center px-5 border-b border-surface-border">
@@ -23,16 +28,23 @@ export function Sidebar({ teams }: { teams: Team[] }) {
             </p>
           ) : (
             <ul className="flex flex-col gap-0.5">
-              {teams.map((t) => (
-                <li key={t.id}>
-                  <Link
-                    href={`/teams/${t.id}`}
-                    className="block px-2 py-1.5 rounded-md text-sm text-text-primary hover:bg-surface-alt transition-colors truncate"
-                  >
-                    {t.name}
-                  </Link>
-                </li>
-              ))}
+              {teams.map((t) => {
+                const isActive = pathname === `/teams/${t.id}`;
+                return (
+                  <li key={t.id}>
+                    <Link
+                      href={`/teams/${t.id}`}
+                      className={`block px-2 py-1.5 rounded-md text-sm truncate transition-colors ${
+                        isActive
+                          ? "bg-accent-light text-accent font-medium"
+                          : "text-text-primary hover:bg-surface-alt"
+                      }`}
+                    >
+                      {t.name}
+                    </Link>
+                  </li>
+                );
+              })}
             </ul>
           )}
 
@@ -48,7 +60,11 @@ export function Sidebar({ teams }: { teams: Team[] }) {
         <div className="border-t border-surface-border pt-4">
           <Link
             href="/dashboard"
-            className="block px-2 py-1.5 rounded-md text-sm text-text-muted hover:bg-surface-alt hover:text-text-primary transition-colors"
+            className={`block px-2 py-1.5 rounded-md text-sm transition-colors ${
+              pathname === "/dashboard"
+                ? "bg-accent-light text-accent font-medium"
+                : "text-text-muted hover:bg-surface-alt hover:text-text-primary"
+            }`}
           >
             Översikt
           </Link>

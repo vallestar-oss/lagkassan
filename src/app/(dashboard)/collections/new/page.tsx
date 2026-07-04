@@ -2,7 +2,12 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { CollectionForm } from "./CollectionForm";
 
-export default async function NewCollectionPage() {
+export default async function NewCollectionPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ team?: string }>;
+}) {
+  const { team: preselectedTeamId } = await searchParams;
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect("/login");
@@ -16,9 +21,17 @@ export default async function NewCollectionPage() {
 
   if (!memberships?.length) redirect("/teams/new");
 
-  const teams = memberships
+  let teams = memberships
     .map((m) => m.teams as { id: string; name: string } | null)
     .filter((t): t is { id: string; name: string } => t !== null);
+
+  // If a team was requested via ?team=, scope the form to just that team —
+  // but only if the user actually has owner/treasurer access to it. If not,
+  // silently fall back to the full list rather than leaking whether the id exists.
+  if (preselectedTeamId) {
+    const scoped = teams.filter((t) => t.id === preselectedTeamId);
+    if (scoped.length) teams = scoped;
+  }
 
   // Load roster members for every eligible team, grouped by team_id.
   const teamIds = teams.map((t) => t.id);
