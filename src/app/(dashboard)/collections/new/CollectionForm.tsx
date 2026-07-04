@@ -66,12 +66,20 @@ export function CollectionForm({
         </p>
       )}
 
-      {/* Team selector (hidden when only one team) */}
+      {/* Team selector (read-only info panel when only one team) */}
       {teams.length === 1 ? (
-        <input type="hidden" name="team_id" value={teams[0].id} />
+        <div className="bg-accent-light border border-accent/20 rounded-lg px-4 py-3">
+          <input type="hidden" name="team_id" value={teams[0].id} />
+          <p className="text-sm text-text-primary">
+            Skapas för: <span className="font-semibold">{teams[0].name}</span>
+          </p>
+          <p className="text-xs text-text-muted mt-1">
+            Medlemmarna hämtas från lagets medlemslista.
+          </p>
+        </div>
       ) : (
         <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">Förening</span>
+          <span className="text-sm font-medium text-text-primary">Välj lag/grupp</span>
           <select
             name="team_id"
             required
@@ -85,6 +93,9 @@ export function CollectionForm({
               </option>
             ))}
           </select>
+          <p className="text-xs text-text-muted">
+            Medlemmarna hämtas från lagets medlemslista.
+          </p>
         </label>
       )}
 
@@ -100,22 +111,6 @@ export function CollectionForm({
             placeholder="t.ex. Höstterminsavgift 2026"
             className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
           />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            Lag / grupp{" "}
-            <span className="text-text-muted font-normal">(valfritt)</span>
-          </span>
-          <input
-            name="group_label"
-            type="text"
-            placeholder="t.ex. Pojkar 2012, Flickor 2014, Seniorlaget"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-          />
-          <p className="text-xs text-text-muted">
-            Hjälper dig hålla koll om föreningen har flera lag, årskullar eller sektioner.
-          </p>
         </label>
 
         <label className="flex flex-col gap-1.5">
@@ -257,20 +252,13 @@ export function CollectionForm({
         </button>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-accent text-white font-semibold text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isPending ? "Skapar…" : "Skapa och hämta länk"}
-        </button>
-        {teams.length === 1 && (
-          <p className="text-xs text-text-muted text-center">
-            Skapas för <span className="font-medium">{teams[0].name}</span>
-          </p>
-        )}
-      </div>
+      <button
+        type="submit"
+        disabled={isPending}
+        className="w-full bg-accent text-white font-semibold text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      >
+        {isPending ? "Skapar…" : "Skapa och hämta länk"}
+      </button>
     </form>
   );
 }
