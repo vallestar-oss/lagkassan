@@ -58,12 +58,11 @@ export function RosterPaymentFlow({
       <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
         <div className="px-5 py-3 border-b border-surface-border">
           <p className="text-sm font-semibold text-text-primary">Välj ditt namn</p>
-          <p className="text-xs text-text-muted mt-0.5">Tryck på ditt namn för att betala.</p>
+          <p className="text-xs text-text-muted mt-0.5">Din betalstatus visas först när du har valt ditt namn.</p>
         </div>
         <ul className="divide-y divide-surface-border">
           {members.map((m) => {
             const isSelected = m.id === selectedId;
-            const isPaid = m.status !== "unpaid";
             return (
               <li key={m.id}>
                 <button
@@ -75,22 +74,14 @@ export function RosterPaymentFlow({
                 >
                   <span
                     className={`text-sm font-medium ${
-                      isSelected ? "text-accent" : isPaid ? "text-text-muted" : "text-text-primary"
+                      isSelected ? "text-accent" : "text-text-primary"
                     }`}
                   >
                     {abbreviateName(m.name)}
                   </span>
-                  {isSelected ? (
+                  {isSelected && (
                     <span className="text-xs font-medium text-accent">Vald ↓</span>
-                  ) : m.status === "confirmed_paid" ? (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success-light text-success border border-success/20">
-                      Bekräftat av kassör
-                    </span>
-                  ) : m.status === "reported_paid" ? (
-                    <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                      Rapporterat betalt
-                    </span>
-                  ) : null}
+                  )}
                 </button>
               </li>
             );
