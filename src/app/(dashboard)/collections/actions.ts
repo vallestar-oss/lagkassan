@@ -233,6 +233,50 @@ export async function addCollectionMembers(
   return { error: null, added: toInsert.length, skipped };
 }
 
+// Remove an unpaid roster participant from an active collection.
+export async function removeCollectionMember(
+  memberId: string,
+  collectionId: string,
+): Promise<{ error: string | null }> {
+  const supabase = await createClient();
+
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError };
+
+  const { data: col } = await supabase
+    .from("collections")
+    .select("status")
+    .eq("id", collectionId)
+    .single();
+  if (!col) return { error: "Förfrågan hittades inte." };
+  if (col.status !== "active")
+    return { error: "Det går bara att ta bort deltagare från aktiva förfrågningar." };
+
+  // Verify the member belongs to this collection and is not already paid.
+  const { data: member } = await supabase
+    .from("collection_members")
+    .select("status")
+    .eq("id", memberId)
+    .eq("collection_id", collectionId)
+    .single();
+  if (!member) return { error: "Deltagaren hittades inte." };
+  if (member.status === "paid") return { error: "Det går inte att ta bort en deltagare som redan är markerad som betald." };
+
+  const { error } = await supabase
+    .from("collection_members")
+    .delete()
+    .eq("id", memberId)
+    .eq("collection_id", collectionId);
+
+  if (error) return { error: "Kunde inte ta bort deltagaren. Försök igen." };
+
+  revalidatePath(`/collections/${collectionId}`);
+  return { error: null };
+}
+
 // Update the payment instructions text on a collection.
 export async function updatePaymentInstructions(
   collectionId: string,

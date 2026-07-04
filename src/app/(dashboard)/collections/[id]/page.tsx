@@ -2,7 +2,7 @@ import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
-import { markPaid, markMemberPaid, setCollectionStatus } from "../actions";
+import { markPaid, markMemberPaid, setCollectionStatus, removeCollectionMember } from "../actions";
 import { CopyButton } from "./CopyButton";
 import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
@@ -189,19 +189,37 @@ export default async function CollectionDetailPage({
                         Betald
                       </span>
                     ) : canEdit ? (
-                      <form
-                        action={async () => {
-                          "use server";
-                          await markMemberPaid(member.id, member.name, id);
-                        }}
-                      >
-                        <button
-                          type="submit"
-                          className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
+                      <div className="flex items-center gap-2">
+                        <form
+                          action={async () => {
+                            "use server";
+                            await markMemberPaid(member.id, member.name, id);
+                          }}
                         >
-                          Markera betald
-                        </button>
-                      </form>
+                          <button
+                            type="submit"
+                            className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors"
+                          >
+                            Markera betald
+                          </button>
+                        </form>
+                        {collection.status === "active" && (
+                          <form
+                            action={async () => {
+                              "use server";
+                              await removeCollectionMember(member.id, id);
+                            }}
+                          >
+                            <button
+                              type="submit"
+                              className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors"
+                              aria-label={`Ta bort ${member.name}`}
+                            >
+                              Ta bort
+                            </button>
+                          </form>
+                        )}
+                      </div>
                     ) : (
                       <span className="text-xs font-medium px-2 py-0.5 rounded bg-surface-alt text-text-muted">
                         Väntar
