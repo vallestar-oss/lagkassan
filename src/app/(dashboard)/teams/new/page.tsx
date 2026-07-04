@@ -1,65 +1,46 @@
-"use client";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { OnboardingSteps } from "../../OnboardingSteps";
+import { TeamForm } from "./TeamForm";
 
-import { useActionState } from "react";
-import { createTeam, type TeamState } from "../actions";
+export default async function NewTeamPage() {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
 
-const initial: TeamState = { error: null };
+  const { count } = await supabase
+    .from("team_members")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id);
 
-export default function NewTeamPage() {
-  const [state, action, isPending] = useActionState(createTeam, initial);
+  const isFirstTeam = !count;
 
   return (
-    <div className="max-w-lg">
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-text-primary">Skapa din förening</h1>
+    <div className="max-w-lg flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-bold text-text-primary">
+          {isFirstTeam ? "Skapa ditt första lag" : "Skapa nytt lag"}
+        </h1>
         <p className="text-text-muted mt-1 text-sm">
-          Ge din förening ett namn — du kan ändra det senare.
+          {isFirstTeam
+            ? "Ett lag kan vara ett åldersgrupp, en sektion, en klass eller vilken grupp som helst som ska betala något tillsammans. Du kan skapa fler senare."
+            : "Ge laget eller gruppen ett namn — du kan ändra det senare."}
         </p>
       </div>
 
-      <form
-        action={action}
-        className="bg-white border border-surface-border rounded-lg p-6 shadow-card flex flex-col gap-5"
-      >
-        {state.error && (
-          <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-            {state.error}
-          </p>
-        )}
+      {isFirstTeam && (
+        <>
+          <OnboardingSteps current={1} />
+          <div className="bg-surface-alt border border-surface-border rounded-lg px-4 py-3 flex flex-col gap-1">
+            <p className="text-xs text-text-muted leading-relaxed">
+              Lagkassan hanterar inga pengar. Betalning sker via Swish/bank enligt kassörens instruktioner.
+              Medlemmar rapporterar betalning själva, och kassören bekräftar efter kontroll.
+            </p>
+          </div>
+        </>
+      )}
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">Föreningens namn</span>
-          <input
-            name="name"
-            type="text"
-            required
-            autoFocus
-            placeholder="t.ex. IFK Örby Friidrott"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-          />
-        </label>
-
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            Beskrivning{" "}
-            <span className="text-text-muted font-normal">(valfritt)</span>
-          </span>
-          <input
-            name="description"
-            type="text"
-            placeholder="t.ex. Löparsektionen, 85 aktiva medlemmar"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-          />
-        </label>
-
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full bg-accent text-white font-semibold text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
-          {isPending ? "Skapar…" : "Skapa förening"}
-        </button>
-      </form>
+      <TeamForm isFirstTeam={isFirstTeam} />
     </div>
   );
 }

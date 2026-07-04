@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { RosterManager } from "./RosterManager";
 import { CollectionCard, type CollectionCardData } from "../../CollectionCard";
+import { OnboardingSteps } from "../../OnboardingSteps";
 
 export default async function TeamPage({
   params,
@@ -93,6 +94,9 @@ export default async function TeamPage({
   const activeCollections = collections.filter((c) => c.status === "active");
   const closedCollections = collections.filter((c) => c.status !== "active");
 
+  const hasMembers = (roster ?? []).length > 0;
+  const hasCollections = collections.length > 0;
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <div>
@@ -117,6 +121,25 @@ export default async function TeamPage({
           </a>
         </p>
       </div>
+
+      {/* Onboarding — guide the organizer to the next step */}
+      {canManage && !hasMembers && (
+        <div className="flex flex-col gap-4">
+          <OnboardingSteps current={2} />
+          <div className="bg-accent-light border border-accent/20 rounded-lg p-4 flex flex-col gap-1">
+            <p className="text-sm font-semibold text-text-primary">Lägg till medlemmar</p>
+            <p className="text-sm text-text-muted">
+              Lägg till namnen på dem som ska betala. Namnen används sedan när du skapar en betalningsförfrågan för laget.{" "}
+              <a href="#medlemmar" className="text-accent hover:underline font-medium">
+                Lägg till nu ↓
+              </a>
+            </p>
+          </div>
+        </div>
+      )}
+      {canManage && hasMembers && !hasCollections && (
+        <OnboardingSteps current={3} />
+      )}
 
       {/* Insamlingar — this team's collections only */}
       <section>

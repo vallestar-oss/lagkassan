@@ -18,7 +18,7 @@ export async function createTeam(
   const name = (formData.get("name") as string | null)?.trim() ?? "";
   const description = (formData.get("description") as string | null)?.trim() ?? "";
 
-  if (!name) return { error: "Föreningens namn är obligatoriskt." };
+  if (!name) return { error: "Lagets namn är obligatoriskt." };
 
   const teamId = crypto.randomUUID();
 
@@ -26,7 +26,7 @@ export async function createTeam(
     .from("teams")
     .insert({ id: teamId, name, description: description || null });
 
-  if (teamError) return { error: teamError.message ?? "Kunde inte skapa förening." };
+  if (teamError) return { error: teamError.message ?? "Kunde inte skapa laget." };
 
   const { error: memberError } = await supabase
     .from("team_members")
@@ -37,7 +37,9 @@ export async function createTeam(
   // Bust the dashboard layout cache so the sidebar's "Mina lag" list shows
   // the new team immediately, without a manual browser refresh.
   revalidatePath("/dashboard", "layout");
-  redirect("/dashboard");
+  // Land on the team page (not the dashboard) so the organizer is guided
+  // straight into the next onboarding step — adding members.
+  redirect(`/teams/${teamId}`);
 }
 
 // ─── Roster members ───────────────────────────────────────────────────────────
