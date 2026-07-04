@@ -233,6 +233,42 @@ export async function addCollectionMembers(
   return { error: null, added: toInsert.length, skipped };
 }
 
+// Update the payment instructions text on a collection.
+export async function updatePaymentInstructions(
+  collectionId: string,
+  _prev: { error: string | null; saved: boolean },
+  formData: FormData,
+): Promise<{ error: string | null; saved: boolean }> {
+  const supabase = await createClient();
+
+  const { error: authError } = await assertCollectionRole(supabase, collectionId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError, saved: false };
+
+  const instructions = (formData.get("payment_instructions") as string | null)?.trim() ?? "";
+
+  const { data: col } = await supabase
+    .from("collections")
+    .select("status")
+    .eq("id", collectionId)
+    .single();
+  if (!col) return { error: "Förfrågan hittades inte.", saved: false };
+  if (col.status !== "active")
+    return { error: "Det går bara att redigera instruktioner för aktiva förfrågningar.", saved: false };
+
+  const { error } = await supabase
+    .from("collections")
+    .update({ payment_instructions: instructions || null })
+    .eq("id", collectionId);
+
+  if (error) return { error: "Kunde inte spara instruktionerna. Försök igen.", saved: false };
+
+  revalidatePath(`/collections/${collectionId}`);
+  return { error: null, saved: true };
+}
+
 // Close or re-open a collection
 export async function setCollectionStatus(
   collectionId: string,

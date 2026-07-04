@@ -242,7 +242,7 @@ function CollectionCard({
         <p className="text-sm font-bold font-mono text-text-primary">
           {collection.paid_count}/{collection.total_count}
         </p>
-        <p className="text-xs text-text-muted">{pct}% betalt</p>
+        <p className="text-xs text-text-muted">{pct}% markerat</p>
       </div>
     </Link>
   );

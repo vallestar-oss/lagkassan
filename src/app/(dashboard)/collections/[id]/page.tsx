@@ -5,6 +5,7 @@ import { formatOre, formatSwedishDate } from "@/lib/utils";
 import { markPaid, markMemberPaid, setCollectionStatus } from "../actions";
 import { CopyButton } from "./CopyButton";
 import { AddMembersForm } from "./AddMembersForm";
+import { EditInstructionsForm } from "./EditInstructionsForm";
 
 export default async function CollectionDetailPage({
   params,
@@ -128,15 +129,15 @@ export default async function CollectionDetailPage({
           <CopyButton text={shareUrl} />
         </div>
         <p className="text-xs text-text-muted mt-2">
-          Dela länken med dina medlemmar — de behöver inget konto för att betala.
+          Dela länken med dina medlemmar — de behöver inget konto för att följa instruktionerna och markera betalning.
         </p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         {[
-          { label: "Betalningar", value: `${paidCount} / ${totalCount}` },
-          { label: "Insamlat", value: formatOre(paidAmount) },
+          { label: "Markerade betalningar", value: `${paidCount} / ${totalCount}` },
+          { label: "Rapporterat betalt", value: formatOre(paidAmount) },
           { label: "Belopp/person", value: formatOre(collection.amount) },
         ].map((s) => (
           <div
@@ -151,11 +152,16 @@ export default async function CollectionDetailPage({
         ))}
       </div>
 
+      {/* Pilot disclaimer */}
+      <p className="text-xs text-text-muted">
+        Lagkassan hanterar inte själva betalningen ännu. Kontrollera markerade betalningar mot Swish eller bank.
+      </p>
+
       {/* Member / payment list */}
       <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
         <div className="px-5 py-3 border-b border-surface-border flex items-center justify-between">
           <p className="text-sm font-semibold text-text-primary">
-            {hasRoster ? "Deltagare" : "Betalningar"}
+            {hasRoster ? "Deltagare" : "Rapporterade betalningar"}
           </p>
           <span className="text-xs text-text-muted">
             {collection.status === "active" ? "Aktiv" : "Stängd"}
@@ -269,6 +275,17 @@ export default async function CollectionDetailPage({
           collectionId={id}
           isFreeForm={!hasRoster}
         />
+      )}
+
+      {/* Edit payment instructions — owner/treasurer, active collections only */}
+      {canEdit && collection.status === "active" && (
+        <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4">
+          <p className="text-sm font-semibold text-text-primary">Redigera betalningsinstruktioner</p>
+          <EditInstructionsForm
+            collectionId={id}
+            current={collection.payment_instructions ?? null}
+          />
+        </div>
       )}
     </div>
   );
