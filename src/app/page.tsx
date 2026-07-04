@@ -93,11 +93,11 @@ export default function LandingPage() {
             Pilotfas — öppen för föreningar och kassörer
           </div>
           <h1 className="text-4xl sm:text-5xl font-bold text-text-primary leading-tight mb-6 max-w-2xl mx-auto">
-            Samla in föreningsavgifter — utan krångel
+            Enklare betalningskoll för lag, föreningar och grupper
           </h1>
           <p className="text-lg text-text-muted leading-relaxed max-w-xl mx-auto mb-10">
-            Skapa en betalningsförfrågan, dela en länk och låt medlemmar markera sin betalning.
-            Se vem som betalat — utan att de behöver ett konto.
+            Skapa en betalningsförfrågan, dela länken och se vem som rapporterat eller bekräftats betald.
+            Inga konton för medlemmarna — inga pengar via Lagkassan.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
@@ -193,10 +193,10 @@ export default function LandingPage() {
         <section id="funktioner" className="max-w-5xl mx-auto px-6 py-20">
           <div className="text-center mb-14">
             <h2 className="text-3xl font-bold text-text-primary mb-3">
-              Byggt för lagledare och kassörer
+              Byggt för kassörer och ansvariga i lag, föreningar och grupper
             </h2>
             <p className="text-text-muted max-w-xl mx-auto">
-              Allt du behöver för att samla in avgifter från en grupp — utan kalkylark och individuella påminnelser.
+              Allt du behöver för att samla in avgifter — utan kalkylark och individuella påminnelser.
             </p>
           </div>
 
@@ -272,7 +272,7 @@ export default function LandingPage() {
               Pilotfas
             </div>
             <h2 className="text-2xl font-bold text-text-primary mb-3">
-              Vill du testa Lagkassan med ditt lag?
+              Vill du testa Lagkassan med ditt lag, din förening eller grupp?
             </h2>
             <p className="text-text-muted text-sm leading-relaxed mb-6">
               Lagkassan är i aktiv pilotfas och söker föreningar, lag och kassörer som vill prova. Skapa ett konto, lägg upp en riktig betalningsförfrågan och dela länken med dina medlemmar — redan idag.
@@ -321,8 +321,8 @@ export default function LandingPage() {
                 a="Kassören skapar en namnlista när förfrågan skapas. Det gör det omöjligt att betala som fel person och ger kassören direkt koll på exakt vilka som inte betalat."
               />
               <FaqItem
-                q="Kan jag ha flera lag under samma konto?"
-                a="Ja. Du kan skapa flera team och hantera dem separat, med egna betalningsförfrågningar och betallistor för var och en."
+                q="Kan jag ha flera lag eller föreningar under samma konto?"
+                a="Ja. Du kan skapa flera lag och föreningar och hantera dem separat, med egna betalningsförfrågningar och deltagarlistor för var och en."
               />
               <FaqItem
                 q="Hur är projektet byggt?"
@@ -336,7 +336,7 @@ export default function LandingPage() {
         <section className="bg-accent py-16">
           <div className="max-w-5xl mx-auto px-6 text-center">
             <h2 className="text-2xl font-bold text-white mb-3">
-              Redo att testa med ditt lag?
+              Redo att testa med ditt lag eller din förening?
             </h2>
             <p className="text-white/80 mb-8">
               Skapa ett konto, lägg upp en riktig förfrågan och se hur enkelt det blir för kassören att hålla koll.
