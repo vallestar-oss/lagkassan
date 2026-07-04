@@ -110,7 +110,7 @@ export default async function PublicPaymentPage({
         </div>
 
         {/* Payment instructions — shown when the organizer has set them */}
-        {collection.payment_instructions && (
+        {collection.payment_instructions ? (
           <div className="bg-white border border-surface-border rounded-lg p-6 shadow-card flex flex-col gap-2">
             <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
               Betalningsinstruktioner
@@ -120,6 +120,12 @@ export default async function PublicPaymentPage({
             </p>
             <p className="text-xs text-text-muted mt-1">
               Följ instruktionerna ovan och markera sedan att du har betalat.
+            </p>
+          </div>
+        ) : (
+          <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+            <p className="text-xs text-amber-800 leading-relaxed">
+              Kassören har inte lagt in betalningsinstruktioner ännu. Kontakta kassören för information om hur du betalar innan du markerar din betalning här.
             </p>
           </div>
         )}

@@ -57,6 +57,12 @@ function TopBar({ email }: { email: string }) {
       <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
         <span className="font-bold text-text-primary tracking-tight">Lagkassan</span>
         <div className="flex items-center gap-4">
+          <a
+            href="mailto:hej@lagkassan.se?subject=Feedback%20om%20Lagkassan"
+            className="text-sm text-text-muted hover:text-text-primary transition-colors hidden sm:block"
+          >
+            Ge feedback
+          </a>
           <span className="text-sm text-text-muted hidden sm:block">{email}</span>
           <form action={signOut}>
             <button

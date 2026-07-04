@@ -269,7 +269,7 @@ export default function LandingPage() {
         <section className="max-w-5xl mx-auto px-6 py-20">
           <div className="max-w-2xl mx-auto bg-white border border-surface-border rounded-lg p-8 shadow-card">
             <div className="inline-flex items-center gap-2 bg-accent-light text-accent text-xs font-semibold px-3 py-1 rounded-full mb-6">
-              Pilotfas
+              Pilotfas · Gratis under pilotfasen
             </div>
             <h2 className="text-2xl font-bold text-text-primary mb-3">
               Vill du testa Lagkassan med ditt lag, din förening eller grupp?
@@ -293,12 +293,20 @@ export default function LandingPage() {
                 ))}
               </ul>
             </div>
-            <Link
-              href="/signup"
-              className="inline-block bg-accent text-white font-semibold px-5 py-2.5 rounded-md hover:bg-accent-hover transition-colors text-sm"
-            >
-              Skapa konto och kom igång
-            </Link>
+            <div className="flex flex-wrap items-center gap-4">
+              <Link
+                href="/signup"
+                className="inline-block bg-accent text-white font-semibold px-5 py-2.5 rounded-md hover:bg-accent-hover transition-colors text-sm"
+              >
+                Skapa konto och kom igång
+              </Link>
+              <a
+                href="mailto:hej@lagkassan.se?subject=Feedback%20om%20Lagkassan"
+                className="text-sm font-medium text-accent hover:underline"
+              >
+                Ge feedback →
+              </a>
+            </div>
           </div>
         </section>
 
@@ -364,6 +372,9 @@ export default function LandingPage() {
         <div className="max-w-5xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-text-muted">
           <span className="font-semibold text-text-primary">Lagkassan</span>
           <p>Pilotfas — Lagkassan hanterar inte pengar. Betalningar sker via Swish eller bank.</p>
+          <a href="mailto:hej@lagkassan.se" className="text-accent hover:underline whitespace-nowrap">
+            Kontakta mig
+          </a>
         </div>
       </footer>
     </div>
