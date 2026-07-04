@@ -67,16 +67,21 @@ export async function submitMockPayment(
 
   const amount = collection.amount;
 
-  // Fast-path double-payment guard: if this member already paid, reject early.
-  // This is just a UX optimization — the real guard against the race is the
-  // partial unique index idx_one_paid_per_member (handled on insert below).
+  // Verify the member actually belongs to THIS collection — without this
+  // check, a tampered client could pair a collection_member_id from a
+  // completely different collection with this collectionId, and the sync
+  // trigger would flip that unrelated member's status.
   if (collectionMemberId) {
     const { data: member } = await supabase
       .from("collection_members")
       .select("status")
       .eq("id", collectionMemberId)
+      .eq("collection_id", collectionId)
       .single();
-    if (member && member.status !== "unpaid")
+    if (!member) return { error: "Ogiltig deltagare för den här förfrågan.", success: false };
+    // Fast-path double-payment guard — the real guard against the race is the
+    // partial unique index idx_one_paid_per_member (handled on insert below).
+    if (member.status !== "unpaid")
       return { error: "Den här personen har redan betalat.", success: false };
   }
 

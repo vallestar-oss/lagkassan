@@ -45,7 +45,7 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Redirect unauthenticated users away from protected routes.
-  const protectedPaths = ["/dashboard", "/collections", "/settings"];
+  const protectedPaths = ["/dashboard", "/collections", "/settings", "/teams"];
   const isProtected = protectedPaths.some((p) => pathname.startsWith(p));
 
   if (isProtected && !user) {
