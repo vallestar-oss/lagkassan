@@ -62,7 +62,7 @@ export function RemindersSection({
             : "border-surface-border text-text-muted hover:border-accent hover:text-accent bg-white"
         }`}
       >
-        {messageCopied ? "Kopierad!" : "Kopiera meddelande"}
+        {messageCopied ? "Kopierad!" : "Kopiera påminnelse"}
       </button>
     </div>
   );

@@ -15,9 +15,9 @@ type FilterKey = "all" | "unpaid" | "reported_paid" | "confirmed_paid";
 
 const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "all",           label: "Alla" },
-  { key: "unpaid",        label: "Ej betalda" },
+  { key: "unpaid",        label: "Ej betalat" },
   { key: "reported_paid", label: "Rapporterat betalt" },
-  { key: "confirmed_paid",label: "Bekräftat av kassör" },
+  { key: "confirmed_paid",label: "Bekräftat betalt" },
 ];
 
 // Shared classes so every badge/button on this list stays visually consistent.
@@ -51,6 +51,7 @@ export function MemberList({
   removeAction:  (memberId: string, collectionId: string) => Promise<{ error: string | null }>;
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
+  const [search, setSearch] = useState("");
 
   const counts: Record<FilterKey, number> = {
     all:           members.length,
@@ -59,7 +60,11 @@ export function MemberList({
     confirmed_paid:members.filter((m) => m.status === "confirmed_paid").length,
   };
 
-  const filtered = filter === "all" ? members : members.filter((m) => m.status === filter);
+  const byStatus = filter === "all" ? members : members.filter((m) => m.status === filter);
+  const query = search.trim().toLowerCase();
+  const filtered = query
+    ? byStatus.filter((m) => m.name.toLowerCase().includes(query))
+    : byStatus;
 
   return (
     <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
@@ -71,6 +76,13 @@ export function MemberList({
             {collectionStatus === "active" ? "Aktiv" : "Stängd"}
           </span>
         </div>
+        <input
+          type="text"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          placeholder="Sök på namn…"
+          className="w-full text-sm border border-surface-border rounded-md px-3 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-light focus:border-accent"
+        />
         <div className="flex flex-wrap gap-2">
           {FILTERS.map(({ key, label }) => (
             <button
@@ -94,7 +106,9 @@ export function MemberList({
 
       {filtered.length === 0 ? (
         <div className="px-5 py-8 text-center">
-          <p className="text-sm text-text-muted">Inga deltagare i den här filtreringen.</p>
+          <p className="text-sm text-text-muted">
+            {query ? "Ingen deltagare matchar sökningen." : "Inga deltagare i den här filtreringen."}
+          </p>
         </div>
       ) : (
         <ul className="divide-y divide-surface-border">

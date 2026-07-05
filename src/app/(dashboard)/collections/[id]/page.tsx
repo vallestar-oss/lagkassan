@@ -89,7 +89,11 @@ export default async function CollectionDetailPage({
   const canEdit = ["owner", "treasurer"].includes(membership.role);
   const teamName = (collection.teams as { name: string } | null)?.name ?? "";
 
-  const reminderText = `Hej! Påminnelse om betalning för ${collection.title} (${formatOre(collection.amount)}). Betala enligt instruktionerna i länken och markera när du har betalat: ${shareUrl}`;
+  const deadlineLine = collection.deadline
+    ? ` Sista betalningsdag: ${formatSwedishDate(collection.deadline)}.`
+    : "";
+
+  const reminderText = `Hej! Påminnelse om betalning för ${collection.title} (${formatOre(collection.amount)}).${deadlineLine} Betala via Swish eller bank enligt betalningsinstruktionerna, öppna sedan länken, välj ditt eget namn och markera att du har betalat: ${shareUrl}`;
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
