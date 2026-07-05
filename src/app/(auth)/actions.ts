@@ -64,3 +64,25 @@ export async function signOut(): Promise<never> {
   await supabase.auth.signOut();
   redirect("/login");
 }
+
+export type ForgotPasswordState = { submitted: boolean };
+
+// Always returns submitted:true regardless of outcome — never reveal whether
+// an account exists for a given email (the errors resetPasswordForEmail can
+// return, e.g. "user not found", would otherwise leak that information).
+export async function requestPasswordReset(
+  _prev: ForgotPasswordState,
+  formData: FormData,
+): Promise<ForgotPasswordState> {
+  const supabase = await createClient();
+  const email = (formData.get("email") as string | null)?.trim() ?? "";
+
+  if (email) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${appUrl}/auth/update-password`,
+    });
+  }
+
+  return { submitted: true };
+}
