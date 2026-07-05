@@ -60,7 +60,7 @@ export async function createCollection(
     .select("id")
     .single();
 
-  if (error || !collection) return { error: error?.message ?? "Kunde inte skapa förfrågan." };
+  if (error || !collection) return { error: "Kunde inte skapa förfrågan. Försök igen." };
 
   // Copy selected roster names + any extra names into collection_members.
   // If none are selected the collection is created without members (fallback

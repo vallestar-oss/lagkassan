@@ -26,13 +26,13 @@ export async function createTeam(
     .from("teams")
     .insert({ id: teamId, name, description: description || null });
 
-  if (teamError) return { error: teamError.message ?? "Kunde inte skapa laget." };
+  if (teamError) return { error: "Kunde inte skapa laget. Försök igen." };
 
   const { error: memberError } = await supabase
     .from("team_members")
     .insert({ team_id: teamId, user_id: user.id, role: "owner" });
 
-  if (memberError) return { error: memberError.message };
+  if (memberError) return { error: "Kunde inte skapa laget. Försök igen." };
 
   // Bust the dashboard layout cache so the sidebar's "Mina lag" list shows
   // the new team immediately, without a manual browser refresh.
@@ -72,7 +72,7 @@ export async function addRosterMember(
     .from("roster_members")
     .insert({ team_id: teamId, name, phone });
 
-  if (error) return { error: error.message };
+  if (error) return { error: "Kunde inte lägga till personen. Försök igen." };
 
   revalidatePath(`/teams/${teamId}`);
   return { error: null };
@@ -162,7 +162,7 @@ export async function updateRosterMember(
     .update({ name: trimmed, phone: phone?.trim() || null })
     .eq("id", id);
 
-  if (error) return { error: error.message };
+  if (error) return { error: "Kunde inte spara ändringen. Försök igen." };
 
   revalidatePath(`/teams/${teamId}`);
   return { error: null };

@@ -26,21 +26,10 @@ export function PaymentForm({
           </svg>
         </div>
         <div>
-          {hasInstructions ? (
-            <>
-              <p className="font-semibold text-text-primary">Tack!</p>
-              <p className="text-sm text-text-muted mt-1">
-                Din betalning har markerats som gjord. Kassören behöver fortfarande kontrollera betalningen.
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="font-semibold text-text-primary">Simulerad betalning registrerad!</p>
-              <p className="text-sm text-text-muted mt-1">
-                Betalningen är markerad som genomförd i demoläget. Inga riktiga pengar har dragits.
-              </p>
-            </>
-          )}
+          <p className="font-semibold text-text-primary">Tack!</p>
+          <p className="text-sm text-text-muted mt-1">
+            Din betalning har markerats som gjord. Kassören behöver fortfarande kontrollera betalningen.
+          </p>
         </div>
       </div>
     );
@@ -99,13 +88,13 @@ export function PaymentForm({
           ? "Registrerar…"
           : hasInstructions
           ? `Jag har betalat enligt instruktionerna — ${formatOre(amount)}`
-          : `Markera som betald (demo) — ${formatOre(amount)}`}
+          : `Markera som betald — ${formatOre(amount)}`}
       </button>
 
       <p className="text-xs text-center text-text-muted">
         {hasInstructions
           ? "Lagkassan hanterar inte betalningen — kassören kontrollerar manuellt."
-          : "Demoläge — inga pengar dras och inga kortuppgifter hanteras."}
+          : "Lagkassan hanterar inga pengar. Kontakta kassören om du är osäker på hur du ska betala."}
       </p>
     </form>
   );
