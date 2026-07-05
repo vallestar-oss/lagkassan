@@ -15,6 +15,7 @@ import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
 import { MemberList } from "./MemberList";
 import { AutoRefresh } from "./AutoRefresh";
+import { RemindersSection } from "./RemindersSection";
 
 export default async function CollectionDetailPage({
   params,
@@ -87,6 +88,8 @@ export default async function CollectionDetailPage({
   const shareUrl = `${appUrl}/p/${collection.slug}`;
   const canEdit = ["owner", "treasurer"].includes(membership.role);
   const teamName = (collection.teams as { name: string } | null)?.name ?? "";
+
+  const reminderText = `Hej! Påminnelse om betalning för ${collection.title} (${formatOre(collection.amount)}). Betala enligt instruktionerna i länken och markera när du har betalat: ${shareUrl}`;
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
@@ -203,6 +206,11 @@ export default async function CollectionDetailPage({
             {canEdit && "Lägg till instruktioner nedan."}
           </p>
         </div>
+      )}
+
+      {/* Share helper — organizer-only, roster-based collections only */}
+      {canEdit && hasRoster && (
+        <RemindersSection shareUrl={shareUrl} unpaidCount={unpaidCount} reminderText={reminderText} />
       )}
 
       {/* Member / payment list */}
