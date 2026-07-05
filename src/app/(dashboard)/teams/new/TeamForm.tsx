@@ -11,7 +11,7 @@ export function TeamForm({ isFirstTeam }: { isFirstTeam: boolean }) {
   return (
     <form
       action={action}
-      className="bg-white border border-surface-border rounded-lg p-6 shadow-card flex flex-col gap-5"
+      className="bg-white border border-surface-border rounded-lg p-6 sm:p-7 shadow-card flex flex-col gap-5"
     >
       {state.error && (
         <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
@@ -47,7 +47,7 @@ export function TeamForm({ isFirstTeam }: { isFirstTeam: boolean }) {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-accent text-white font-semibold text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className="w-full bg-accent text-white font-semibold text-sm min-h-11 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
       >
         {isPending ? "Skapar…" : isFirstTeam ? "Skapa lag" : "Skapa nytt lag"}
       </button>

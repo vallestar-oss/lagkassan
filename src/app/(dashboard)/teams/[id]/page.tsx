@@ -102,20 +102,20 @@ export default async function TeamPage({
       <div>
         <Link
           href="/dashboard"
-          className="text-sm text-text-muted hover:text-text-primary transition-colors"
+          className="text-xs text-text-muted hover:text-text-primary transition-colors"
         >
           ← Översikt
         </Link>
-        <div className="flex flex-wrap items-start justify-between gap-4 mt-1">
-          <h1 className="text-2xl font-bold text-text-primary">{team.name}</h1>
+        <div className="flex flex-wrap items-start justify-between gap-4 mt-1.5">
+          <h1 className="text-[26px] leading-tight font-bold text-text-primary">{team.name}</h1>
           <Link
             href={`/collections/new?team=${team.id}`}
-            className="flex items-center gap-2 bg-accent text-white text-sm font-semibold px-4 py-2.5 rounded-md hover:bg-accent-hover transition-colors shadow-sm flex-shrink-0"
+            className="flex items-center gap-2 bg-accent text-white text-sm font-semibold min-h-11 px-4 rounded-md hover:bg-accent-hover transition-colors shadow-sm flex-shrink-0"
           >
             + Ny förfrågan
           </Link>
         </div>
-        <p className="text-sm text-text-muted mt-0.5">
+        <p className="text-sm text-text-muted mt-1">
           <a href="#medlemmar" className="text-accent hover:underline">
             Hantera medlemmar
           </a>

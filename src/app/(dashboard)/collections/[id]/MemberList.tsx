@@ -92,10 +92,12 @@ export function MemberList({
   return (
     <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
       {/* Header + filters */}
-      <div className="px-5 py-3 border-b border-surface-border flex flex-col gap-3">
+      <div className="px-5 py-4 border-b border-surface-border flex flex-col gap-3 bg-surface-alt/40">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-text-primary">Deltagare</p>
-          <span className="text-xs text-text-muted">
+          <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Deltagare</p>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+            collectionStatus === "active" ? "text-success bg-success-light" : "text-text-muted bg-surface-alt"
+          }`}>
             {collectionStatus === "active" ? "Aktiv" : "Stängd"}
           </span>
         </div>
@@ -104,7 +106,7 @@ export function MemberList({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Sök på namn…"
-          className="w-full text-sm border border-surface-border rounded-md px-3 py-1.5 text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-light focus:border-accent"
+          className="w-full text-sm border border-surface-border rounded-md px-3 py-2 bg-white text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-light focus:border-accent"
         />
         <div className="flex flex-wrap gap-2">
           {FILTERS.map(({ key, label }) => (
@@ -144,7 +146,7 @@ export function MemberList({
             return (
               <li
                 key={member.id}
-                className="flex flex-wrap items-center justify-between px-5 py-3 gap-x-3 gap-y-2"
+                className="flex flex-wrap items-center justify-between px-5 py-3.5 gap-x-3 gap-y-2 hover:bg-surface-alt/40 transition-colors"
               >
                 <p className="text-sm font-medium text-text-primary flex-1 min-w-0 truncate">
                   {member.name}

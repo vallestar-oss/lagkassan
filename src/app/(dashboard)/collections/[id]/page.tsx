@@ -106,13 +106,11 @@ export default async function CollectionDetailPage({
       {/* Header */}
       <div className="flex items-start justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <Link href="/dashboard" className="text-sm text-text-muted hover:text-text-primary transition-colors">
-              ← Dashboard
-            </Link>
-          </div>
-          <h1 className="text-2xl font-bold text-text-primary">{collection.title}</h1>
-          <p className="text-sm text-text-muted mt-0.5">
+          <Link href="/dashboard" className="text-xs text-text-muted hover:text-text-primary transition-colors">
+            ← Dashboard
+          </Link>
+          <h1 className="text-[26px] leading-tight font-bold text-text-primary mt-1.5">{collection.title}</h1>
+          <p className="text-sm text-text-muted mt-1">
             {teamName}
             {collection.group_label && (
               <> · <span className="text-text-primary font-medium">{collection.group_label}</span></>
@@ -145,13 +143,13 @@ export default async function CollectionDetailPage({
       {hasRoster && (
         <div className="flex flex-wrap gap-2">
           {[
-            { label: "Totalt",    value: totalCount,     cls: "bg-surface-alt text-text-muted border-surface-border" },
-            { label: "Ej betalda", value: unpaidCount,   cls: "bg-surface-alt text-text-muted border-surface-border" },
-            { label: "Rapporterat", value: reportedCount, cls: unpaidCount === 0 && reportedCount === 0 ? "bg-surface-alt text-text-muted border-surface-border" : "bg-amber-50 text-amber-700 border-amber-200" },
-            { label: "Bekräftat",  value: confirmedCount, cls: confirmedCount === 0 ? "bg-surface-alt text-text-muted border-surface-border" : "bg-success-light text-success border-success/20" },
+            { label: "Totalt",     value: totalCount,     cls: "bg-white text-text-muted border-surface-border" },
+            { label: "Ej betalda", value: unpaidCount,   cls: "bg-white text-text-muted border-surface-border" },
+            { label: "Rapporterat", value: reportedCount, cls: unpaidCount === 0 && reportedCount === 0 ? "bg-white text-text-muted border-surface-border" : "bg-amber-50 text-amber-700 border-amber-200" },
+            { label: "Bekräftat",  value: confirmedCount, cls: confirmedCount === 0 ? "bg-white text-text-muted border-surface-border" : "bg-success-light text-success border-success/20" },
           ].map((s) => (
-            <div key={s.label} className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-medium ${s.cls}`}>
-              <span className="text-text-muted font-normal">{s.label}:</span>
+            <div key={s.label} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-medium shadow-sm ${s.cls}`}>
+              <span className="text-text-muted font-normal">{s.label}</span>
               <span className="font-bold tabular-nums">{s.value}</span>
             </div>
           ))}
@@ -167,14 +165,14 @@ export default async function CollectionDetailPage({
           { label: "Kvar att bekräfta",   value: formatOre(remainingAmount) },
         ].map((s) => (
           <div key={s.label} className="bg-white border border-surface-border rounded-lg p-4 shadow-card">
-            <p className="text-xs text-text-muted">{s.label}</p>
-            <p className="text-base font-bold text-text-primary font-mono mt-0.5">{s.value}</p>
+            <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">{s.label}</p>
+            <p className="text-lg font-bold text-text-primary font-mono mt-1 tabular-nums">{s.value}</p>
           </div>
         ))}
       </div>
 
       {/* Pilot disclaimer */}
-      <div className="flex items-start gap-2 bg-surface-alt border border-surface-border rounded-lg px-4 py-3">
+      <div className="flex items-start gap-2.5 bg-surface-alt/70 rounded-lg px-4 py-3.5">
         <svg className="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
         </svg>

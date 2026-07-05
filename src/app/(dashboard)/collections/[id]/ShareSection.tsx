@@ -45,15 +45,18 @@ export function ShareSection({
   }
 
   return (
-    <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4">
-      <p className="text-sm font-semibold text-text-primary">Dela betalningslänk</p>
+    <div className="bg-white border border-surface-border rounded-lg p-5 sm:p-6 shadow-card flex flex-col gap-4">
+      <div>
+        <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Dela</p>
+        <p className="text-[15px] font-semibold text-text-primary mt-0.5">Betalningslänk för hela gruppen</p>
+      </div>
 
-      <div className="flex flex-col sm:flex-row gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start gap-5">
         <div className="flex-1 flex flex-col gap-3 min-w-0">
-          <div className="flex items-center gap-2">
-            <code className="flex-1 text-sm text-text-primary bg-surface border border-surface-border rounded px-3 py-2 font-mono truncate">
+          <div className="flex items-center gap-2 bg-surface-alt/70 rounded-md pl-3.5 pr-1.5 py-1.5">
+            <span className="flex-1 text-sm text-text-primary font-mono truncate">
               {shareUrl}
-            </code>
+            </span>
             <button
               type="button"
               onClick={copyLink}
@@ -77,7 +80,7 @@ export function ShareSection({
           </p>
 
           {canManage && (
-            <>
+            <div className="flex flex-col gap-2 mt-1 pt-3 border-t border-surface-border">
               <p className="text-xs text-text-muted">
                 {unpaidCount === 0
                   ? "Alla har markerat eller bekräftats som betalda."
@@ -100,20 +103,20 @@ export function ShareSection({
                   Kunde inte kopiera automatiskt. Försök igen.
                 </p>
               )}
-            </>
+            </div>
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-1 flex-shrink-0">
+        <div className="flex flex-row sm:flex-col items-center gap-2 flex-shrink-0 self-center sm:self-start sm:pl-5 sm:border-l border-surface-border">
           {/* eslint-disable-next-line @next/next/no-img-element -- small server-generated data URL, not an optimizable remote image */}
           <img
             src={qrDataUrl}
             alt="QR-kod till betalningslänken"
-            width={120}
-            height={120}
-            className="border border-surface-border rounded-md"
+            width={88}
+            height={88}
+            className="border border-surface-border rounded-md opacity-90"
           />
-          <p className="text-xs text-text-muted">Skanna för att öppna länken</p>
+          <p className="text-[11px] text-text-muted text-center max-w-[88px]">Eller skanna</p>
         </div>
       </div>
     </div>
