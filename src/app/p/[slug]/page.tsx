@@ -74,7 +74,7 @@ export default async function PublicPaymentPage({
               <span className="ml-2 normal-case font-medium text-text-muted">· {collection.group_label}</span>
             )}
           </SectionLabel>
-          <h1 className="text-[22px] leading-tight font-bold text-text-primary">{collection.title}</h1>
+          <h1 className="text-display leading-tight font-bold text-text-primary">{collection.title}</h1>
           {collection.description && (
             <p className="text-sm text-text-muted mt-1.5">{collection.description}</p>
           )}

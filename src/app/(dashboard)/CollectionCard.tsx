@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
 import { cardClass, cn } from "@/lib/ui";
+import { Badge } from "@/components/ui/Badge";
 
 export type CollectionCardData = {
   id: string;
@@ -33,9 +34,14 @@ export function CollectionCard({
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-[15px] text-text-primary truncate group-hover:text-accent transition-colors">
-            {collection.title}
-          </p>
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="font-semibold text-[15px] text-text-primary truncate group-hover:text-accent transition-colors">
+              {collection.title}
+            </p>
+            {collection.status !== "active" && (
+              <Badge variant="neutral">Avslutad</Badge>
+            )}
+          </div>
           <p className="text-xs text-text-muted mt-1">
             {showTeamName && collection.team_name && (
               <span className="text-text-muted">{collection.team_name} · </span>
@@ -50,7 +56,7 @@ export function CollectionCard({
           </p>
         </div>
         <div className="text-right flex-shrink-0">
-          <p className="text-sm font-bold font-mono text-text-primary tabular-nums">
+          <p className={`text-sm font-bold font-mono tabular-nums ${collection.status === "active" ? "text-text-primary" : "text-text-muted"}`}>
             {collection.paid_count}/{collection.total_count}
           </p>
           <p className="text-xs text-text-muted mt-0.5">{pct}% markerat</p>
@@ -58,7 +64,7 @@ export function CollectionCard({
       </div>
       <div className="h-2 rounded-full bg-surface-alt overflow-hidden">
         <div
-          className="h-full rounded-full bg-accent transition-all duration-500"
+          className={`h-full rounded-full transition-all duration-500 ${collection.status === "active" ? "bg-accent" : "bg-text-muted/30"}`}
           style={{ width: `${pct}%` }}
         />
       </div>

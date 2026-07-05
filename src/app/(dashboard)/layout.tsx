@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
 import { Sidebar } from "./Sidebar";
+import { MobileNav } from "./MobileNav";
 import { Button } from "@/components/ui/Button";
 
 export default async function DashboardLayout({
@@ -19,7 +20,7 @@ export default async function DashboardLayout({
         <Sidebar teams={[]} />
         <div className="flex-1 flex flex-col min-w-0">
           <TopBar email="(Supabase ej konfigurerat)" />
-          <main className="max-w-5xl mx-auto px-6 py-10 w-full">{children}</main>
+          <main className="max-w-5xl mx-auto px-6 py-10 pb-24 md:pb-10 w-full">{children}</main>
         </div>
       </div>
     );
@@ -46,8 +47,9 @@ export default async function DashboardLayout({
       <Sidebar teams={teams} />
       <div className="flex-1 flex flex-col min-w-0">
         <TopBar email={user.email ?? ""} />
-        <main className="max-w-5xl mx-auto px-6 py-10 w-full">{children}</main>
+        <main className="max-w-5xl mx-auto px-6 py-10 pb-24 md:pb-10 w-full">{children}</main>
       </div>
+      <MobileNav teams={teams} />
     </div>
   );
 }

@@ -34,6 +34,9 @@
   --spacing-section: 96px;
   --spacing-card:    24px;
 
+  /* Typography scale extension */
+  --text-display: 22px;
+
   /* Radius — cards get a softer, more premium curve; controls stay crisper
      but a touch friendlier than raw Tailwind defaults. Overriding these
      tokens cascades to every existing rounded-lg/rounded-md/rounded use. */
