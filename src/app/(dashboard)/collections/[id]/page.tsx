@@ -1,5 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import Link from "next/link";
+import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
 import {
@@ -10,12 +11,11 @@ import {
   confirmMemberPayment,
   revertMemberPayment,
 } from "../actions";
-import { CopyButton } from "./CopyButton";
 import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
 import { MemberList } from "./MemberList";
 import { AutoRefresh } from "./AutoRefresh";
-import { RemindersSection } from "./RemindersSection";
+import { ShareSection } from "./ShareSection";
 
 export default async function CollectionDetailPage({
   params,
@@ -95,6 +95,10 @@ export default async function CollectionDetailPage({
 
   const reminderText = `Hej! Påminnelse om betalning för ${collection.title} (${formatOre(collection.amount)}).${deadlineLine} Betala via Swish eller bank enligt betalningsinstruktionerna, öppna sedan länken, välj ditt eget namn och markera att du har betalat: ${shareUrl}`;
 
+  // Generated server-side (pure JS, no canvas) so the client ships zero extra
+  // QR code JS — just an <img> with a data: URL.
+  const qrDataUrl = await QRCode.toDataURL(shareUrl, { margin: 1, width: 240 });
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <AutoRefresh />
@@ -141,21 +145,14 @@ export default async function CollectionDetailPage({
         )}
       </div>
 
-      {/* Share URL */}
-      <div className="bg-accent-light border border-accent/20 rounded-lg p-4">
-        <p className="text-xs font-semibold text-accent uppercase tracking-wider mb-2">
-          Delningslänk
-        </p>
-        <div className="flex items-center gap-2">
-          <code className="flex-1 text-sm text-text-primary bg-white border border-surface-border rounded px-3 py-2 font-mono truncate">
-            {shareUrl}
-          </code>
-          <CopyButton text={shareUrl} />
-        </div>
-        <p className="text-xs text-text-muted mt-2">
-          Dela länken med dina medlemmar — de behöver inget konto för att följa instruktionerna och markera betalning.
-        </p>
-      </div>
+      {/* Share section — visible to every team member; the reminder helper is organizer-only */}
+      <ShareSection
+        shareUrl={shareUrl}
+        qrDataUrl={qrDataUrl}
+        unpaidCount={unpaidCount}
+        reminderText={reminderText}
+        canManage={canEdit}
+      />
 
       {/* Status summary */}
       {hasRoster && (
@@ -210,11 +207,6 @@ export default async function CollectionDetailPage({
             {canEdit && "Lägg till instruktioner nedan."}
           </p>
         </div>
-      )}
-
-      {/* Share helper — organizer-only, roster-based collections only */}
-      {canEdit && hasRoster && (
-        <RemindersSection shareUrl={shareUrl} unpaidCount={unpaidCount} reminderText={reminderText} />
       )}
 
       {/* Member / payment list */}
