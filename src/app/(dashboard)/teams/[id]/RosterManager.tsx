@@ -176,6 +176,7 @@ function RosterRow({
   }
 
   async function remove() {
+    if (!window.confirm(`Ta bort ${member.name} från laget?`)) return;
     setBusy(true);
     await deleteRosterMember(member.id, teamId);
     // revalidatePath refreshes the page; this row drops out of the list.
@@ -185,32 +186,36 @@ function RosterRow({
     return (
       <li className="px-5 py-3 flex flex-col gap-2">
         <div className="flex flex-col sm:flex-row gap-2">
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Namn"
-            className="flex-1 border border-surface-border rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-          />
-          <input
-            value={phone}
-            onChange={(e) => setPhone(e.target.value)}
-            placeholder="Telefon (valfritt)"
-            className="flex-1 border border-surface-border rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-          />
+          <label className="flex-1 flex flex-col gap-1">
+            <span className="text-xs font-medium text-text-muted">Namn</span>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+            />
+          </label>
+          <label className="flex-1 flex flex-col gap-1">
+            <span className="text-xs font-medium text-text-muted">Telefon (valfritt)</span>
+            <input
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+            />
+          </label>
         </div>
         {err && <p className="text-xs text-danger">{err}</p>}
         <div className="flex gap-2">
           <button
             onClick={save}
             disabled={busy}
-            className="text-xs font-medium px-3 py-1.5 rounded bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-60"
+            className="text-xs font-medium px-4 min-h-11 inline-flex items-center justify-center rounded bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-60"
           >
             {busy ? "Sparar…" : "Spara"}
           </button>
           <button
             onClick={cancel}
             disabled={busy}
-            className="text-xs font-medium px-3 py-1.5 rounded border border-surface-border text-text-muted hover:text-text-primary transition-colors"
+            className="text-xs font-medium px-4 min-h-11 inline-flex items-center justify-center rounded border border-surface-border text-text-muted hover:text-text-primary transition-colors"
           >
             Avbryt
           </button>
@@ -239,14 +244,15 @@ function RosterRow({
           <button
             onClick={() => setEditing(true)}
             disabled={busy}
-            className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-60"
+            className="text-xs font-medium px-3 min-h-11 inline-flex items-center justify-center rounded border border-surface-border text-text-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-60"
           >
             Ändra
           </button>
           <button
             onClick={remove}
             disabled={busy}
-            className="text-xs font-medium px-2.5 py-1 rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors disabled:opacity-60"
+            aria-label={`Ta bort ${member.name}`}
+            className="text-xs font-medium px-3 min-h-11 inline-flex items-center justify-center rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors disabled:opacity-60"
           >
             {busy ? "…" : "Ta bort"}
           </button>

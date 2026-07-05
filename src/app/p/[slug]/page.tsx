@@ -99,14 +99,26 @@ export default async function PublicPaymentPage({
           )}
         </div>
 
-        {/* Pilot info banner */}
-        <div className="bg-surface-alt border border-surface-border rounded-lg px-4 py-3 flex items-start gap-3">
-          <svg className="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-          </svg>
-          <p className="text-xs text-text-muted leading-relaxed">
-            Betalningen sker direkt till föreningen via Swish eller bank — inte via Lagkassan. Här rapporterar du bara att du har betalat.
+        {/* Så fungerar det — explicit steps so members never think Lagkassan takes the payment */}
+        <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card">
+          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
+            Så fungerar det
           </p>
+          <ol className="flex flex-col gap-2.5">
+            {[
+              "Läs vad insamlingen gäller ovan — belopp och sista betalningsdag.",
+              "Betala externt enligt instruktionerna nedan, via Swish eller bank.",
+              "Välj ditt eget namn i listan.",
+              "Markera dig som betald. Lagkassan sparar bara statusen — inga pengar går via Lagkassan.",
+            ].map((text, i) => (
+              <li key={i} className="flex items-start gap-3">
+                <span className="w-5 h-5 rounded-full bg-accent-light text-accent text-xs font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+                  {i + 1}
+                </span>
+                <span className="text-sm text-text-primary">{text}</span>
+              </li>
+            ))}
+          </ol>
         </div>
 
         {/* Payment instructions — shown when the organizer has set them */}

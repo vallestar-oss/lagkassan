@@ -235,8 +235,8 @@ export function CollectionForm({
             <button
               type="button"
               onClick={() => removeExtra(i)}
-              className="text-text-muted hover:text-danger transition-colors text-lg leading-none flex-shrink-0 px-1"
-              aria-label="Ta bort"
+              className="w-9 h-9 flex items-center justify-center text-text-muted hover:text-danger transition-colors text-lg leading-none flex-shrink-0 rounded-md hover:bg-danger-light"
+              aria-label={`Ta bort ${val || "namn"}`}
             >
               ×
             </button>

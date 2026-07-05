@@ -16,18 +16,32 @@ export function ShareSection({
   canManage: boolean;
 }) {
   const [linkCopied, setLinkCopied] = useState(false);
+  const [linkFailed, setLinkFailed] = useState(false);
   const [messageCopied, setMessageCopied] = useState(false);
+  const [messageFailed, setMessageFailed] = useState(false);
 
   async function copyLink() {
-    await navigator.clipboard.writeText(shareUrl);
-    setLinkCopied(true);
-    setTimeout(() => setLinkCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkFailed(false);
+      setLinkCopied(true);
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      setLinkFailed(true);
+      setTimeout(() => setLinkFailed(false), 3000);
+    }
   }
 
   async function copyMessage() {
-    await navigator.clipboard.writeText(reminderText);
-    setMessageCopied(true);
-    setTimeout(() => setMessageCopied(false), 2000);
+    try {
+      await navigator.clipboard.writeText(reminderText);
+      setMessageFailed(false);
+      setMessageCopied(true);
+      setTimeout(() => setMessageCopied(false), 2000);
+    } catch {
+      setMessageFailed(true);
+      setTimeout(() => setMessageFailed(false), 3000);
+    }
   }
 
   return (
@@ -43,7 +57,7 @@ export function ShareSection({
             <button
               type="button"
               onClick={copyLink}
-              className={`text-sm font-medium px-3 py-2 rounded-md border transition-colors whitespace-nowrap ${
+              className={`text-sm font-medium px-3 min-h-11 inline-flex items-center justify-center rounded-md border transition-colors whitespace-nowrap ${
                 linkCopied
                   ? "bg-success-light border-success/30 text-success"
                   : "border-surface-border text-text-muted hover:border-accent hover:text-accent bg-white"
@@ -52,6 +66,11 @@ export function ShareSection({
               {linkCopied ? "Länk kopierad" : "Kopiera länk"}
             </button>
           </div>
+          {linkFailed && (
+            <p className="text-xs text-danger">
+              Kunde inte kopiera automatiskt. Markera länken ovan och kopiera manuellt.
+            </p>
+          )}
 
           <p className="text-xs text-text-muted leading-relaxed">
             Dela länken i lagets gruppchatt. Alla använder samma länk och väljer sitt eget namn.
@@ -68,7 +87,7 @@ export function ShareSection({
               <button
                 type="button"
                 onClick={copyMessage}
-                className={`self-start text-sm font-medium px-4 py-2 rounded-md border transition-colors ${
+                className={`self-start text-sm font-medium px-4 min-h-11 inline-flex items-center justify-center rounded-md border transition-colors ${
                   messageCopied
                     ? "bg-success-light border-success/30 text-success"
                     : "border-surface-border text-text-muted hover:border-accent hover:text-accent bg-white"
@@ -76,6 +95,11 @@ export function ShareSection({
               >
                 {messageCopied ? "Kopierad!" : "Kopiera påminnelse"}
               </button>
+              {messageFailed && (
+                <p className="text-xs text-danger">
+                  Kunde inte kopiera automatiskt. Försök igen.
+                </p>
+              )}
             </>
           )}
         </div>

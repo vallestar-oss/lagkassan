@@ -16,6 +16,7 @@ import { EditInstructionsForm } from "./EditInstructionsForm";
 import { MemberList } from "./MemberList";
 import { AutoRefresh } from "./AutoRefresh";
 import { ShareSection } from "./ShareSection";
+import { CloseCollectionButton } from "./CloseCollectionButton";
 
 export default async function CollectionDetailPage({
   params,
@@ -122,26 +123,12 @@ export default async function CollectionDetailPage({
           </p>
         </div>
         {canEdit && (
-          <form
-            action={async () => {
-              "use server";
-              await setCollectionStatus(
-                id,
-                collection.status === "active" ? "closed" : "active",
-              );
-            }}
-          >
-            <button
-              type="submit"
-              className={`text-xs font-medium px-3 py-1.5 rounded border transition-colors whitespace-nowrap ${
-                collection.status === "active"
-                  ? "border-surface-border text-text-muted hover:border-danger hover:text-danger"
-                  : "border-success/30 text-success bg-success-light hover:bg-success-light"
-              }`}
-            >
-              {collection.status === "active" ? "Stäng förfrågan" : "Öppna igen"}
-            </button>
-          </form>
+          <CloseCollectionButton
+            collectionId={id}
+            isActive={collection.status === "active"}
+            collectionTitle={collection.title}
+            action={setCollectionStatus}
+          />
         )}
       </div>
 
