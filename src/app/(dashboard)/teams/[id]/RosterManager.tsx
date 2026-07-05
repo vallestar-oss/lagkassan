@@ -8,6 +8,7 @@ import {
   type RosterState,
 } from "../actions";
 import { getInitials } from "@/lib/utils";
+import { BulkAddRosterForm } from "./BulkAddRosterForm";
 
 type Member = { id: string; name: string; phone: string | null };
 
@@ -25,6 +26,7 @@ export function RosterManager({
   const [state, action, isPending] = useActionState(addRosterMember, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const wasPending = useRef(false);
+  const [showBulk, setShowBulk] = useState(false);
 
   // Clear the add form only after a submit that completed without an error.
   useEffect(() => {
@@ -38,56 +40,72 @@ export function RosterManager({
     <div className="flex flex-col gap-5">
       {/* Add form */}
       {canManage && (
-        <form
-          ref={formRef}
-          action={action}
-          className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4"
-        >
-          <p className="text-sm font-semibold text-text-primary">
-            Lägg till medlem
-          </p>
-
-          {state.error && (
-            <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-              {state.error}
-            </p>
-          )}
-
-          <input type="hidden" name="team_id" value={teamId} />
-
-          <div className="flex flex-col sm:flex-row gap-3">
-            <label className="flex flex-col gap-1.5 flex-1">
-              <span className="text-sm font-medium text-text-primary">Namn</span>
-              <input
-                name="name"
-                type="text"
-                required
-                placeholder="Anna Lindqvist"
-                className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-              />
-            </label>
-            <label className="flex flex-col gap-1.5 flex-1">
-              <span className="text-sm font-medium text-text-primary">
-                Telefon{" "}
-                <span className="text-text-muted font-normal">(valfritt)</span>
-              </span>
-              <input
-                name="phone"
-                type="tel"
-                placeholder="070-123 45 67"
-                className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-              />
-            </label>
+        <>
+          <div className="flex items-center justify-end -mb-2">
+            <button
+              type="button"
+              onClick={() => setShowBulk((v) => !v)}
+              className="text-xs font-medium text-accent hover:underline flex-shrink-0"
+            >
+              {showBulk ? "Lägg till en i taget" : "Klistra in lista"}
+            </button>
           </div>
 
-          <button
-            type="submit"
-            disabled={isPending}
-            className="w-full sm:w-auto sm:self-start bg-accent text-white font-semibold text-sm px-5 py-2.5 sm:py-2 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {isPending ? "Lägger till…" : "Lägg till"}
-          </button>
-        </form>
+          {showBulk ? (
+            <BulkAddRosterForm teamId={teamId} />
+          ) : (
+            <form
+              ref={formRef}
+              action={action}
+              className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4"
+            >
+              <p className="text-sm font-semibold text-text-primary">
+                Lägg till medlem
+              </p>
+
+              {state.error && (
+                <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
+                  {state.error}
+                </p>
+              )}
+
+              <input type="hidden" name="team_id" value={teamId} />
+
+              <div className="flex flex-col sm:flex-row gap-3">
+                <label className="flex flex-col gap-1.5 flex-1">
+                  <span className="text-sm font-medium text-text-primary">Namn</span>
+                  <input
+                    name="name"
+                    type="text"
+                    required
+                    placeholder="Anna Lindqvist"
+                    className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+                  />
+                </label>
+                <label className="flex flex-col gap-1.5 flex-1">
+                  <span className="text-sm font-medium text-text-primary">
+                    Telefon{" "}
+                    <span className="text-text-muted font-normal">(valfritt)</span>
+                  </span>
+                  <input
+                    name="phone"
+                    type="tel"
+                    placeholder="070-123 45 67"
+                    className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+                  />
+                </label>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isPending}
+                className="w-full sm:w-auto sm:self-start bg-accent text-white font-semibold text-sm px-5 py-2.5 sm:py-2 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {isPending ? "Lägger till…" : "Lägg till"}
+              </button>
+            </form>
+          )}
+        </>
       )}
 
       {/* Member list */}

@@ -78,6 +78,68 @@ export async function addRosterMember(
   return { error: null };
 }
 
+export type BulkRosterState = { error: string | null; added: number; skipped: string[] };
+
+// Paste a list of names (one per line) to add multiple roster members at
+// once. Mirrors addCollectionMembers' dedupe logic: skips exact duplicates
+// within the pasted list and names that already exist in the roster.
+export async function addRosterMembersBulk(
+  teamId: string,
+  _prev: BulkRosterState,
+  formData: FormData,
+): Promise<BulkRosterState> {
+  const supabase = await createClient();
+
+  const { error: authError } = await assertTeamRole(supabase, teamId, [
+    "owner",
+    "treasurer",
+  ]);
+  if (authError) return { error: authError, added: 0, skipped: [] };
+
+  const raw = (formData.get("names") as string | null) ?? "";
+  const names = raw
+    .split("\n")
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .map((n) => n.slice(0, 100)); // cap individual name length
+
+  if (names.length === 0)
+    return { error: "Ange minst ett namn.", added: 0, skipped: [] };
+  if (names.length > 500)
+    return { error: "Max 500 namn per gång.", added: 0, skipped: [] };
+
+  // Fetch existing roster names for this team to deduplicate.
+  const { data: existing } = await supabase
+    .from("roster_members")
+    .select("name")
+    .eq("team_id", teamId);
+
+  const existingLower = new Set(
+    (existing ?? []).map((m) => m.name.trim().toLowerCase()),
+  );
+
+  const toInsert: string[] = [];
+  const skipped: string[] = [];
+  for (const name of names) {
+    if (existingLower.has(name.toLowerCase())) {
+      skipped.push(name);
+    } else {
+      toInsert.push(name);
+      existingLower.add(name.toLowerCase()); // prevent duplicates within the same pasted list
+    }
+  }
+
+  if (toInsert.length > 0) {
+    const { error } = await supabase.from("roster_members").insert(
+      toInsert.map((name) => ({ team_id: teamId, name })),
+    );
+    if (error) return { error: "Kunde inte lägga till medlemmar. Försök igen.", added: 0, skipped: [] };
+  }
+
+  revalidatePath(`/teams/${teamId}`);
+  return { error: null, added: toInsert.length, skipped };
+}
+
 export async function updateRosterMember(
   id: string,
   teamId: string,
