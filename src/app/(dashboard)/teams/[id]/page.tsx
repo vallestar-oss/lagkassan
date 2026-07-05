@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 import { RosterManager } from "./RosterManager";
 import { CollectionCard, type CollectionCardData } from "../../CollectionCard";
 import { OnboardingSteps } from "../../OnboardingSteps";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import { buttonClass } from "@/lib/ui";
 
 export default async function TeamPage({
   params,
@@ -99,28 +102,21 @@ export default async function TeamPage({
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
-      <div>
-        <Link
-          href="/dashboard"
-          className="text-xs text-text-muted hover:text-text-primary transition-colors"
-        >
-          ← Översikt
-        </Link>
-        <div className="flex flex-wrap items-start justify-between gap-4 mt-1.5">
-          <h1 className="text-[26px] leading-tight font-bold text-text-primary">{team.name}</h1>
-          <Link
-            href={`/collections/new?team=${team.id}`}
-            className="flex items-center gap-2 bg-accent text-white text-sm font-semibold min-h-11 px-4 rounded-md hover:bg-accent-hover transition-colors shadow-sm flex-shrink-0"
-          >
-            + Ny förfrågan
-          </Link>
-        </div>
-        <p className="text-sm text-text-muted mt-1">
+      <PageHeader
+        backHref="/dashboard"
+        backLabel="← Översikt"
+        title={team.name}
+        subtitle={
           <a href="#medlemmar" className="text-accent hover:underline">
             Hantera medlemmar
           </a>
-        </p>
-      </div>
+        }
+        action={
+          <Link href={`/collections/new?team=${team.id}`} className={buttonClass("primary")}>
+            + Ny förfrågan
+          </Link>
+        }
+      />
 
       {/* Onboarding — guide the organizer to the next step */}
       {canManage && !hasMembers && (
@@ -143,9 +139,7 @@ export default async function TeamPage({
 
       {/* Insamlingar — this team's collections only */}
       <section>
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
-          Insamlingar
-        </p>
+        <SectionLabel className="mb-3">Insamlingar</SectionLabel>
 
         {collections.length === 0 ? (
           <div className="border border-surface-border border-dashed rounded-lg bg-white p-10 flex flex-col items-center text-center gap-3">
@@ -183,9 +177,7 @@ export default async function TeamPage({
 
       {/* Medlemmar */}
       <div id="medlemmar" className="flex flex-col gap-3 scroll-mt-6">
-        <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-          Medlemmar
-        </p>
+        <SectionLabel>Medlemmar</SectionLabel>
         <RosterManager
           teamId={team.id}
           members={roster ?? []}

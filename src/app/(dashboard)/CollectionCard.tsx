@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
+import { cardClass, cn } from "@/lib/ui";
 
 export type CollectionCardData = {
   id: string;
@@ -28,7 +29,7 @@ export function CollectionCard({
   return (
     <Link
       href={`/collections/${collection.id}`}
-      className="bg-white border border-surface-border rounded-lg px-5 py-5 shadow-card hover:border-accent/30 hover:-translate-y-0.5 transition-all group flex flex-col gap-3.5"
+      className={cn(cardClass, "px-5 py-5 hover:border-accent/30 hover:-translate-y-0.5 transition-all group flex flex-col gap-3.5")}
     >
       <div className="flex items-center justify-between gap-4">
         <div className="flex-1 min-w-0">

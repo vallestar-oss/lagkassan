@@ -2,6 +2,11 @@
 
 import { useActionState } from "react";
 import { addCollectionMembers } from "../actions";
+import { Card } from "@/components/ui/Card";
+import { Field } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import { textareaClass } from "@/lib/ui";
 
 type State = { error: string | null; added: number; skipped: string[] };
 const initial: State = { error: null, added: 0, skipped: [] };
@@ -17,29 +22,25 @@ export function AddMembersForm({
   const [state, action, isPending] = useActionState(boundAction, initial);
 
   return (
-    <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
-      <div className="px-5 py-3 border-b border-surface-border">
-        <p className="text-sm font-semibold text-text-primary">Lägg till deltagare</p>
+    <Card className="overflow-hidden">
+      <div className="px-5 py-4 border-b border-surface-border bg-surface-alt/40">
+        <SectionLabel>Lägg till deltagare</SectionLabel>
         {isFreeForm && (
-          <p className="text-xs text-text-muted mt-0.5">
+          <p className="text-xs text-text-muted mt-1">
             Obs: förfrågan saknar deltagarlista ännu. Att lägga till deltagare aktiverar namnvalsflödet på betalningssidan.
           </p>
         )}
       </div>
 
       <form action={action} className="p-5 flex flex-col gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            Namn{" "}
-            <span className="text-text-muted font-normal">(ett per rad)</span>
-          </span>
+        <Field label="Namn (ett per rad)">
           <textarea
             name="names"
             rows={4}
             placeholder={"Anna Lindqvist\nErik Johansson\nMaria Svensson"}
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors resize-none font-mono"
+            className={`${textareaClass} font-mono`}
           />
-        </label>
+        </Field>
 
         {state.error && (
           <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
@@ -61,14 +62,10 @@ export function AddMembersForm({
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="self-start bg-accent text-white text-sm font-semibold px-4 py-2 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
+        <Button type="submit" variant="primary" disabled={isPending} className="self-start">
           {isPending ? "Lägger till…" : "Lägg till deltagare"}
-        </button>
+        </Button>
       </form>
-    </div>
+    </Card>
   );
 }

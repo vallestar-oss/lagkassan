@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 import { formatOre, formatSwedishDateTime } from "@/lib/utils";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import { inputClass, cardClass, cn } from "@/lib/ui";
 
 type Member = {
   id: string;
@@ -19,16 +23,6 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "reported_paid", label: "Rapporterat betalt" },
   { key: "confirmed_paid",label: "Bekräftat betalt" },
 ];
-
-// Shared classes so every badge/button on this list stays visually consistent.
-// Buttons target a ~44px tap height for comfortable mobile use.
-const badgeBase = "text-xs font-medium px-2.5 py-1 rounded-full border whitespace-nowrap";
-const badgeUnpaid = `${badgeBase} bg-surface-alt text-text-muted border-surface-border`;
-const badgeReported = `${badgeBase} bg-amber-50 text-amber-700 border-amber-200`;
-const badgeConfirmed = `${badgeBase} bg-success-light text-success border-success/20`;
-const btnBase = "text-xs font-medium px-3 min-h-11 inline-flex items-center justify-center rounded border border-surface-border text-text-muted transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed";
-const btnSuccess = `${btnBase} hover:border-success hover:text-success`;
-const btnDanger = `${btnBase} hover:border-danger hover:text-danger`;
 
 export function MemberList({
   members,
@@ -90,23 +84,21 @@ export function MemberList({
   }
 
   return (
-    <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
+    <div className={cn(cardClass, "overflow-hidden")}>
       {/* Header + filters */}
       <div className="px-5 py-4 border-b border-surface-border flex flex-col gap-3 bg-surface-alt/40">
         <div className="flex items-center justify-between">
-          <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Deltagare</p>
-          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
-            collectionStatus === "active" ? "text-success bg-success-light" : "text-text-muted bg-surface-alt"
-          }`}>
+          <SectionLabel>Deltagare</SectionLabel>
+          <Badge variant={collectionStatus === "active" ? "success" : "neutral"}>
             {collectionStatus === "active" ? "Aktiv" : "Stängd"}
-          </span>
+          </Badge>
         </div>
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder="Sök på namn…"
-          className="w-full text-sm border border-surface-border rounded-md px-3 py-2 bg-white text-text-primary placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-accent-light focus:border-accent"
+          className={inputClass}
         />
         <div className="flex flex-wrap gap-2">
           {FILTERS.map(({ key, label }) => (
@@ -159,19 +151,20 @@ export function MemberList({
                   {member.status === "confirmed_paid" ? (
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex flex-wrap items-center justify-end gap-2">
-                        <span className={badgeConfirmed}>Bekräftat av kassör</span>
+                        <Badge variant="success">Bekräftat av kassör</Badge>
                         {canEdit && (
-                          <button
+                          <Button
                             type="button"
+                            variant="destructive"
+                            size="chip"
                             disabled={pendingKey === revertKey}
                             onClick={() => {
                               if (!confirmRevert(member)) return;
                               runAction(revertKey, () => revertAction(member.id, collectionId));
                             }}
-                            className={btnDanger}
                           >
                             {pendingKey === revertKey ? "…" : "Ångra"}
-                          </button>
+                          </Button>
                         )}
                       </div>
                       {member.confirmed_at && (
@@ -192,28 +185,30 @@ export function MemberList({
                   ) : member.status === "reported_paid" ? (
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex flex-wrap items-center justify-end gap-2">
-                        <span className={badgeReported}>Rapporterat betalt</span>
+                        <Badge variant="warning">Rapporterat betalt</Badge>
                         {canEdit && (
                           <>
-                            <button
+                            <Button
                               type="button"
+                              variant="success"
+                              size="chip"
                               disabled={pendingKey === confirmKey}
                               onClick={() => runAction(confirmKey, () => confirmAction(member.id, collectionId))}
-                              className={btnSuccess}
                             >
                               {pendingKey === confirmKey ? "…" : "Bekräfta"}
-                            </button>
-                            <button
+                            </Button>
+                            <Button
                               type="button"
+                              variant="destructive"
+                              size="chip"
                               disabled={pendingKey === revertKey}
                               onClick={() => {
                                 if (!confirmRevert(member)) return;
                                 runAction(revertKey, () => revertAction(member.id, collectionId));
                               }}
-                              className={btnDanger}
                             >
                               {pendingKey === revertKey ? "…" : "Ångra"}
-                            </button>
+                            </Button>
                           </>
                         )}
                       </div>
@@ -230,28 +225,30 @@ export function MemberList({
                   ) : canEdit ? (
                     <div className="flex flex-col items-end gap-1">
                       <div className="flex flex-wrap items-center justify-end gap-2">
-                        <span className={badgeUnpaid}>Ej betald</span>
-                        <button
+                        <Badge variant="neutral">Ej betald</Badge>
+                        <Button
                           type="button"
+                          variant="success"
+                          size="chip"
                           disabled={pendingKey === markPaidKey}
                           onClick={() => runAction(markPaidKey, () => markPaidAction(member.id, member.name, collectionId))}
-                          className={btnSuccess}
                         >
                           {pendingKey === markPaidKey ? "…" : "Markera betald"}
-                        </button>
+                        </Button>
                         {collectionStatus === "active" && (
-                          <button
+                          <Button
                             type="button"
+                            variant="destructive"
+                            size="chip"
                             disabled={pendingKey === removeKey}
                             onClick={() => {
                               if (!window.confirm(`Ta bort ${member.name} från insamlingen?`)) return;
                               runAction(removeKey, () => removeAction(member.id, collectionId));
                             }}
-                            className={btnDanger}
                             aria-label={`Ta bort ${member.name}`}
                           >
                             {pendingKey === removeKey ? "…" : "Ta bort"}
-                          </button>
+                          </Button>
                         )}
                       </div>
                       {(rowError?.key === markPaidKey || rowError?.key === removeKey) && (
@@ -260,7 +257,7 @@ export function MemberList({
                     </div>
 
                   ) : (
-                    <span className={badgeUnpaid}>Ej betald</span>
+                    <Badge variant="neutral">Ej betald</Badge>
                   )}
                 </div>
               </li>

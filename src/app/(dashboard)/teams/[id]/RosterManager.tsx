@@ -9,6 +9,11 @@ import {
 } from "../actions";
 import { getInitials } from "@/lib/utils";
 import { BulkAddRosterForm } from "./BulkAddRosterForm";
+import { Card } from "@/components/ui/Card";
+import { Field } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import { inputClass, buttonClass } from "@/lib/ui";
 
 type Member = { id: string; name: string; phone: string | null };
 
@@ -45,7 +50,7 @@ export function RosterManager({
             <button
               type="button"
               onClick={() => setShowBulk((v) => !v)}
-              className="text-xs font-medium text-accent hover:underline flex-shrink-0"
+              className={buttonClass("subtle", "sm")}
             >
               {showBulk ? "Lägg till en i taget" : "Klistra in lista"}
             </button>
@@ -54,67 +59,42 @@ export function RosterManager({
           {showBulk ? (
             <BulkAddRosterForm teamId={teamId} />
           ) : (
-            <form
-              ref={formRef}
-              action={action}
-              className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4"
-            >
-              <p className="text-sm font-semibold text-text-primary">
-                Lägg till medlem
-              </p>
+            <Card className="p-5">
+              <form ref={formRef} action={action} className="flex flex-col gap-4">
+                <SectionLabel>Lägg till medlem</SectionLabel>
 
-              {state.error && (
-                <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-                  {state.error}
-                </p>
-              )}
+                {state.error && (
+                  <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
+                    {state.error}
+                  </p>
+                )}
 
-              <input type="hidden" name="team_id" value={teamId} />
+                <input type="hidden" name="team_id" value={teamId} />
 
-              <div className="flex flex-col sm:flex-row gap-3">
-                <label className="flex flex-col gap-1.5 flex-1">
-                  <span className="text-sm font-medium text-text-primary">Namn</span>
-                  <input
-                    name="name"
-                    type="text"
-                    required
-                    placeholder="Anna Lindqvist"
-                    className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-                  />
-                </label>
-                <label className="flex flex-col gap-1.5 flex-1">
-                  <span className="text-sm font-medium text-text-primary">
-                    Telefon{" "}
-                    <span className="text-text-muted font-normal">(valfritt)</span>
-                  </span>
-                  <input
-                    name="phone"
-                    type="tel"
-                    placeholder="070-123 45 67"
-                    className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-                  />
-                </label>
-              </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Field label="Namn">
+                    <input name="name" type="text" required placeholder="Anna Lindqvist" className={inputClass} />
+                  </Field>
+                  <Field label="Telefon" optional>
+                    <input name="phone" type="tel" placeholder="070-123 45 67" className={inputClass} />
+                  </Field>
+                </div>
 
-              <button
-                type="submit"
-                disabled={isPending}
-                className="w-full sm:w-auto sm:self-start bg-accent text-white font-semibold text-sm px-5 py-2.5 sm:py-2 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {isPending ? "Lägger till…" : "Lägg till"}
-              </button>
-            </form>
+                <Button type="submit" variant="primary" disabled={isPending} className="w-full sm:w-auto sm:self-start">
+                  {isPending ? "Lägger till…" : "Lägg till"}
+                </Button>
+              </form>
+            </Card>
           )}
         </>
       )}
 
       {/* Member list */}
-      <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
-        <div className="px-5 py-3 border-b border-surface-border">
-          <p className="text-sm font-semibold text-text-primary">
-            Medlemmar{" "}
-            <span className="text-text-muted font-normal">({members.length})</span>
-          </p>
+      <Card className="overflow-hidden">
+        <div className="px-5 py-4 border-b border-surface-border bg-surface-alt/40">
+          <SectionLabel>
+            Medlemmar <span className="normal-case font-normal">({members.length})</span>
+          </SectionLabel>
         </div>
 
         {members.length === 0 ? (
@@ -136,7 +116,7 @@ export function RosterManager({
             ))}
           </ul>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
@@ -186,46 +166,28 @@ function RosterRow({
     return (
       <li className="px-5 py-3 flex flex-col gap-2">
         <div className="flex flex-col sm:flex-row gap-2">
-          <label className="flex-1 flex flex-col gap-1">
-            <span className="text-xs font-medium text-text-muted">Namn</span>
-            <input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-            />
-          </label>
-          <label className="flex-1 flex flex-col gap-1">
-            <span className="text-xs font-medium text-text-muted">Telefon (valfritt)</span>
-            <input
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-            />
-          </label>
+          <Field label="Namn">
+            <input value={name} onChange={(e) => setName(e.target.value)} className={inputClass} />
+          </Field>
+          <Field label="Telefon" optional>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} className={inputClass} />
+          </Field>
         </div>
         {err && <p className="text-xs text-danger">{err}</p>}
         <div className="flex gap-2">
-          <button
-            onClick={save}
-            disabled={busy}
-            className="text-xs font-medium px-4 min-h-11 inline-flex items-center justify-center rounded bg-accent text-white hover:bg-accent-hover transition-colors disabled:opacity-60"
-          >
+          <Button onClick={save} disabled={busy} variant="primary" size="chip">
             {busy ? "Sparar…" : "Spara"}
-          </button>
-          <button
-            onClick={cancel}
-            disabled={busy}
-            className="text-xs font-medium px-4 min-h-11 inline-flex items-center justify-center rounded border border-surface-border text-text-muted hover:text-text-primary transition-colors"
-          >
+          </Button>
+          <Button onClick={cancel} disabled={busy} variant="secondary" size="chip">
             Avbryt
-          </button>
+          </Button>
         </div>
       </li>
     );
   }
 
   return (
-    <li className="flex items-center justify-between px-5 py-3 gap-3 hover:bg-surface transition-colors">
+    <li className="flex items-center justify-between px-5 py-3 gap-3 hover:bg-surface-alt/40 transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="w-8 h-8 rounded-full bg-accent-light text-accent text-xs font-semibold flex items-center justify-center flex-shrink-0">
           {getInitials(member.name)}
@@ -241,21 +203,18 @@ function RosterRow({
       </div>
       {canManage && (
         <div className="flex items-center gap-2 flex-shrink-0">
-          <button
-            onClick={() => setEditing(true)}
-            disabled={busy}
-            className="text-xs font-medium px-3 min-h-11 inline-flex items-center justify-center rounded border border-surface-border text-text-muted hover:border-accent hover:text-accent transition-colors disabled:opacity-60"
-          >
+          <Button onClick={() => setEditing(true)} disabled={busy} variant="secondary" size="chip">
             Ändra
-          </button>
-          <button
+          </Button>
+          <Button
             onClick={remove}
             disabled={busy}
+            variant="destructive"
+            size="chip"
             aria-label={`Ta bort ${member.name}`}
-            className="text-xs font-medium px-3 min-h-11 inline-flex items-center justify-center rounded border border-surface-border text-text-muted hover:border-danger hover:text-danger transition-colors disabled:opacity-60"
           >
             {busy ? "…" : "Ta bort"}
-          </button>
+          </Button>
         </div>
       )}
     </li>

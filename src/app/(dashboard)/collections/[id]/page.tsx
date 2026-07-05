@@ -1,5 +1,4 @@
 import { notFound, redirect } from "next/navigation";
-import Link from "next/link";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
@@ -17,6 +16,13 @@ import { MemberList } from "./MemberList";
 import { AutoRefresh } from "./AutoRefresh";
 import { ShareSection } from "./ShareSection";
 import { CloseCollectionButton } from "./CloseCollectionButton";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { StatCard } from "@/components/ui/StatCard";
+import { Badge } from "@/components/ui/Badge";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import type { BadgeVariant } from "@/lib/ui";
 
 export default async function CollectionDetailPage({
   params,
@@ -104,13 +110,12 @@ export default async function CollectionDetailPage({
     <div className="flex flex-col gap-6 max-w-2xl">
       <AutoRefresh />
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <Link href="/dashboard" className="text-xs text-text-muted hover:text-text-primary transition-colors">
-            ← Dashboard
-          </Link>
-          <h1 className="text-[26px] leading-tight font-bold text-text-primary mt-1.5">{collection.title}</h1>
-          <p className="text-sm text-text-muted mt-1">
+      <PageHeader
+        backHref="/dashboard"
+        backLabel="← Dashboard"
+        title={collection.title}
+        subtitle={
+          <>
             {teamName}
             {collection.group_label && (
               <> · <span className="text-text-primary font-medium">{collection.group_label}</span></>
@@ -118,17 +123,19 @@ export default async function CollectionDetailPage({
             {collection.deadline && (
               <> · Sista dag: {formatSwedishDate(collection.deadline)}</>
             )}
-          </p>
-        </div>
-        {canEdit && (
-          <CloseCollectionButton
-            collectionId={id}
-            isActive={collection.status === "active"}
-            collectionTitle={collection.title}
-            action={setCollectionStatus}
-          />
-        )}
-      </div>
+          </>
+        }
+        action={
+          canEdit ? (
+            <CloseCollectionButton
+              collectionId={id}
+              isActive={collection.status === "active"}
+              collectionTitle={collection.title}
+              action={setCollectionStatus}
+            />
+          ) : undefined
+        }
+      />
 
       {/* Share section — visible to every team member; the reminder helper is organizer-only */}
       <ShareSection
@@ -142,33 +149,26 @@ export default async function CollectionDetailPage({
       {/* Status summary */}
       {hasRoster && (
         <div className="flex flex-wrap gap-2">
-          {[
-            { label: "Totalt",     value: totalCount,     cls: "bg-white text-text-muted border-surface-border" },
-            { label: "Ej betalda", value: unpaidCount,   cls: "bg-white text-text-muted border-surface-border" },
-            { label: "Rapporterat", value: reportedCount, cls: unpaidCount === 0 && reportedCount === 0 ? "bg-white text-text-muted border-surface-border" : "bg-amber-50 text-amber-700 border-amber-200" },
-            { label: "Bekräftat",  value: confirmedCount, cls: confirmedCount === 0 ? "bg-white text-text-muted border-surface-border" : "bg-success-light text-success border-success/20" },
-          ].map((s) => (
-            <div key={s.label} className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border text-xs font-medium shadow-sm ${s.cls}`}>
+          {([
+            { label: "Totalt",      value: totalCount,     variant: "neutral" },
+            { label: "Ej betalda",  value: unpaidCount,    variant: "neutral" },
+            { label: "Rapporterat", value: reportedCount,  variant: unpaidCount === 0 && reportedCount === 0 ? "neutral" : "warning" },
+            { label: "Bekräftat",   value: confirmedCount, variant: confirmedCount === 0 ? "neutral" : "success" },
+          ] as { label: string; value: number; variant: BadgeVariant }[]).map((s) => (
+            <Badge key={s.label} variant={s.variant} className="shadow-sm">
               <span className="text-text-muted font-normal">{s.label}</span>
               <span className="font-bold tabular-nums">{s.value}</span>
-            </div>
+            </Badge>
           ))}
         </div>
       )}
 
       {/* Amount stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        {[
-          { label: "Förväntat totalt",    value: formatOre(totalAmount) },
-          { label: "Rapporterat betalt",  value: formatOre(reportedAmount) },
-          { label: "Bekräftat av kassör", value: formatOre(confirmedAmount) },
-          { label: "Kvar att bekräfta",   value: formatOre(remainingAmount) },
-        ].map((s) => (
-          <div key={s.label} className="bg-white border border-surface-border rounded-lg p-4 shadow-card">
-            <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">{s.label}</p>
-            <p className="text-lg font-bold text-text-primary font-mono mt-1 tabular-nums">{s.value}</p>
-          </div>
-        ))}
+        <StatCard label="Förväntat totalt" value={formatOre(totalAmount)} />
+        <StatCard label="Rapporterat betalt" value={formatOre(reportedAmount)} />
+        <StatCard label="Bekräftat av kassör" value={formatOre(confirmedAmount)} />
+        <StatCard label="Kvar att bekräfta" value={formatOre(remainingAmount)} />
       </div>
 
       {/* Pilot disclaimer */}
@@ -209,12 +209,12 @@ export default async function CollectionDetailPage({
         />
       ) : (
         /* Free-form: show individual payment rows */
-        <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
-          <div className="px-5 py-3 border-b border-surface-border flex items-center justify-between">
-            <p className="text-sm font-semibold text-text-primary">Rapporterade betalningar</p>
-            <span className="text-xs text-text-muted">
+        <Card className="overflow-hidden">
+          <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between bg-surface-alt/40">
+            <SectionLabel>Rapporterade betalningar</SectionLabel>
+            <Badge variant={collection.status === "active" ? "success" : "neutral"}>
               {collection.status === "active" ? "Aktiv" : "Stängd"}
-            </span>
+            </Badge>
           </div>
           {paymentList.length === 0 ? (
             <div className="px-5 py-10 text-center">
@@ -225,7 +225,7 @@ export default async function CollectionDetailPage({
           ) : (
             <ul className="divide-y divide-surface-border">
               {paymentList.map((payment) => (
-                <li key={payment.id} className="flex items-center justify-between px-5 py-3 gap-3">
+                <li key={payment.id} className="flex items-center justify-between px-5 py-3.5 gap-3 hover:bg-surface-alt/40 transition-colors">
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-text-primary truncate">{payment.payer_name}</p>
                     {payment.payer_email && (
@@ -235,26 +235,22 @@ export default async function CollectionDetailPage({
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="font-mono text-sm text-text-muted">{formatOre(payment.amount)}</span>
                     {payment.status === "paid" ? (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-success-light text-success">
-                        Betald
-                      </span>
+                      <Badge variant="success">Betald</Badge>
                     ) : canEdit ? (
                       <form action={async () => { "use server"; await markPaid(payment.id, id); }}>
-                        <button type="submit" className="text-xs font-medium px-2 py-0.5 rounded border border-surface-border text-text-muted hover:border-success hover:text-success transition-colors">
+                        <Button type="submit" variant="secondary" size="sm">
                           Markera betald
-                        </button>
+                        </Button>
                       </form>
                     ) : (
-                      <span className="text-xs font-medium px-2 py-0.5 rounded bg-surface-alt text-text-muted">
-                        Väntar
-                      </span>
+                      <Badge variant="neutral">Väntar</Badge>
                     )}
                   </div>
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </Card>
       )}
       {/* Add participants — only for active collections the user can edit */}
       {canEdit && collection.status === "active" && (
@@ -266,13 +262,13 @@ export default async function CollectionDetailPage({
 
       {/* Edit payment instructions — owner/treasurer, active collections only */}
       {canEdit && collection.status === "active" && (
-        <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4">
-          <p className="text-sm font-semibold text-text-primary">Redigera betalningsinstruktioner</p>
+        <Card className="p-5 flex flex-col gap-4">
+          <SectionLabel>Redigera betalningsinstruktioner</SectionLabel>
           <EditInstructionsForm
             collectionId={id}
             current={collection.payment_instructions ?? null}
           />
-        </div>
+        </Card>
       )}
     </div>
   );

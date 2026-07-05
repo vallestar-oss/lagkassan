@@ -3,6 +3,11 @@
 import { useActionState, useState } from "react";
 import { submitMockPayment, type PaymentState } from "./actions";
 import { formatOre } from "@/lib/utils";
+import { Card } from "@/components/ui/Card";
+import { Field } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { Badge } from "@/components/ui/Badge";
+import { inputClass } from "@/lib/ui";
 
 type Member = { id: string; name: string; status: string };
 
@@ -38,7 +43,7 @@ export function RosterPaymentFlow({
 
   if (state.success) {
     return (
-      <div className="bg-success-light border border-success/30 rounded-lg p-6 text-center flex flex-col gap-3">
+      <div className="bg-success-light border border-success/30 rounded-lg shadow-card p-6 text-center flex flex-col gap-3">
         <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto">
           <IconCheck className="w-6 h-6 text-success" />
         </div>
@@ -55,8 +60,8 @@ export function RosterPaymentFlow({
   return (
     <div className="flex flex-col gap-4">
       {/* Member list */}
-      <div className="bg-white border border-surface-border rounded-lg shadow-card overflow-hidden">
-        <div className="px-5 py-3 border-b border-surface-border">
+      <Card className="overflow-hidden">
+        <div className="px-5 py-4 border-b border-surface-border bg-surface-alt/40">
           <p className="text-sm font-semibold text-text-primary">Välj ditt namn</p>
           <p className="text-xs text-text-muted mt-0.5">Din betalstatus visas först när du har valt ditt namn.</p>
         </div>
@@ -71,7 +76,7 @@ export function RosterPaymentFlow({
                   className={`w-full flex items-center justify-between gap-3 px-5 py-3.5 text-left transition-colors border-l-2 ${
                     isSelected
                       ? "bg-accent-light border-accent"
-                      : "border-transparent hover:bg-surface cursor-pointer active:bg-surface-alt"
+                      : "border-transparent hover:bg-surface-alt/60 cursor-pointer active:bg-surface-alt"
                   }`}
                 >
                   <span
@@ -89,24 +94,20 @@ export function RosterPaymentFlow({
             );
           })}
         </ul>
-      </div>
+      </Card>
 
       {/* Panel — appears when a name is selected */}
       {selectedMember && (
         selectedMember.status !== "unpaid" ? (
-          <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-2">
+          <Card className="p-5 flex flex-col gap-2">
             <div className="flex items-center gap-2">
               <p className="text-sm font-semibold text-text-primary">
                 {abbreviateName(selectedMember.name)}
               </p>
               {selectedMember.status === "confirmed_paid" ? (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-success-light text-success border border-success/20">
-                  Bekräftat av kassör
-                </span>
+                <Badge variant="success">Bekräftat av kassör</Badge>
               ) : (
-                <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
-                  Rapporterat betalt
-                </span>
+                <Badge variant="warning">Rapporterat betalt</Badge>
               )}
             </div>
             <p className="text-sm text-text-muted">
@@ -114,57 +115,46 @@ export function RosterPaymentFlow({
                 ? "Kassören har bekräftat betalningen. Klart!"
                 : "Betalningen är rapporterad — kassören kontrollerar mot Swish eller bank."}
             </p>
-          </div>
+          </Card>
         ) : (
-          <form
-            action={action}
-            className="bg-white border border-accent/30 rounded-lg p-5 shadow-card flex flex-col gap-4"
-          >
-            <p className="text-sm font-semibold text-text-primary">
-              Bekräfta betalning för{" "}
-              <span className="text-accent">{abbreviateName(selectedMember.name)}</span>
-            </p>
-
-            {state.error && (
-              <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-                {state.error}
+          <div className="bg-white border border-accent/30 rounded-lg shadow-card p-5">
+            <form action={action} className="flex flex-col gap-4">
+              <p className="text-sm font-semibold text-text-primary">
+                Bekräfta betalning för{" "}
+                <span className="text-accent">{abbreviateName(selectedMember.name)}</span>
               </p>
-            )}
 
-            <input type="hidden" name="collection_id" value={collectionId} />
-            {/* amount is intentionally NOT submitted — the server reads it from
-                the DB (collections.amount), never the client. */}
-            <input type="hidden" name="payer_name" value={selectedMember.name} />
-            <input type="hidden" name="collection_member_id" value={selectedMember.id} />
+              {state.error && (
+                <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
+                  {state.error}
+                </p>
+              )}
 
-            <label className="flex flex-col gap-1.5">
-              <span className="text-sm font-medium text-text-primary">
-                E-postadress{" "}
-                <span className="text-text-muted font-normal">(valfritt)</span>
-              </span>
-              <input
-                name="payer_email"
-                type="email"
-                autoComplete="email"
-                placeholder="din@email.se"
-                className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-              />
-            </label>
+              <input type="hidden" name="collection_id" value={collectionId} />
+              {/* amount is intentionally NOT submitted — the server reads it from
+                  the DB (collections.amount), never the client. */}
+              <input type="hidden" name="payer_name" value={selectedMember.name} />
+              <input type="hidden" name="collection_member_id" value={selectedMember.id} />
 
-            <button
-              type="submit"
-              disabled={isPending}
-              className="w-full bg-accent text-white font-semibold py-3 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {isPending
-                ? "Registrerar…"
-                : `Jag har betalat — ${formatOre(amount)}`}
-            </button>
+              <Field label="E-postadress" optional>
+                <input
+                  name="payer_email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="din@email.se"
+                  className={inputClass}
+                />
+              </Field>
 
-            <p className="text-xs text-center text-text-muted">
-              Lagkassan hanterar inga pengar. Betalningen sker via Swish eller bank.
-            </p>
-          </form>
+              <Button type="submit" variant="primary" disabled={isPending} className="w-full">
+                {isPending ? "Registrerar…" : `Jag har betalat — ${formatOre(amount)}`}
+              </Button>
+
+              <p className="text-xs text-center text-text-muted">
+                Lagkassan hanterar inga pengar. Betalningen sker via Swish eller bank.
+              </p>
+            </form>
+          </div>
         )
       )}
     </div>

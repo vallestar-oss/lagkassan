@@ -2,6 +2,10 @@
 
 import { useActionState } from "react";
 import { addRosterMembersBulk, type BulkRosterState } from "../actions";
+import { Card } from "@/components/ui/Card";
+import { Field } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { textareaClass } from "@/lib/ui";
 
 const initial: BulkRosterState = { error: null, added: 0, skipped: [] };
 
@@ -10,7 +14,7 @@ export function BulkAddRosterForm({ teamId }: { teamId: string }) {
   const [state, action, isPending] = useActionState(boundAction, initial);
 
   return (
-    <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4">
+    <Card className="p-5 flex flex-col gap-4">
       <div>
         <p className="text-sm font-semibold text-text-primary">Lägg till flera medlemmar</p>
         <p className="text-xs text-text-muted mt-0.5">
@@ -19,17 +23,14 @@ export function BulkAddRosterForm({ teamId }: { teamId: string }) {
       </div>
 
       <form action={action} className="flex flex-col gap-3">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            Klistra in en medlem per rad
-          </span>
+        <Field label="Klistra in en medlem per rad">
           <textarea
             name="names"
             rows={5}
             placeholder={"Exempel: Anna Svensson\nOlle Karlsson\nHannes Nilsson"}
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors resize-none font-mono"
+            className={`${textareaClass} font-mono`}
           />
-        </label>
+        </Field>
 
         {state.error && (
           <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
@@ -51,14 +52,10 @@ export function BulkAddRosterForm({ teamId }: { teamId: string }) {
           </div>
         )}
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="w-full sm:w-auto sm:self-start bg-accent text-white text-sm font-semibold px-5 py-2.5 sm:py-2 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-        >
+        <Button type="submit" variant="primary" disabled={isPending} className="w-full sm:w-auto sm:self-start">
           {isPending ? "Lägger till…" : "Lägg till medlemmar"}
-        </button>
+        </Button>
       </form>
-    </div>
+    </Card>
   );
 }

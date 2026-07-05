@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "./actions";
 import { Sidebar } from "./Sidebar";
+import { Button } from "@/components/ui/Button";
 
 export default async function DashboardLayout({
   children,
@@ -68,12 +69,9 @@ function TopBar({ email }: { email: string }) {
             {email}
           </span>
           <form action={signOut}>
-            <button
-              type="submit"
-              className="text-sm font-medium text-text-muted bg-white border border-surface-border rounded-md px-3.5 py-2 hover:border-text-muted hover:text-text-primary transition-colors shadow-sm"
-            >
+            <Button type="submit" variant="secondary" size="sm">
               Logga ut
-            </button>
+            </Button>
           </form>
         </div>
       </div>

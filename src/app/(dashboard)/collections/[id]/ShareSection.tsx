@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { Card } from "@/components/ui/Card";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 
 export function ShareSection({
   shareUrl,
@@ -45,9 +47,9 @@ export function ShareSection({
   }
 
   return (
-    <div className="bg-white border border-surface-border rounded-lg p-5 sm:p-6 shadow-card flex flex-col gap-4">
+    <Card className="p-5 sm:p-6 flex flex-col gap-4">
       <div>
-        <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider">Dela</p>
+        <SectionLabel>Dela</SectionLabel>
         <p className="text-[15px] font-semibold text-text-primary mt-0.5">Betalningslänk för hela gruppen</p>
       </div>
 
@@ -119,6 +121,6 @@ export function ShareSection({
           <p className="text-[11px] text-text-muted text-center max-w-[88px]">Eller skanna</p>
         </div>
       </div>
-    </div>
+    </Card>
   );
 }

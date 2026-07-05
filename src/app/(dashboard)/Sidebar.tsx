@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 
 type Team = { id: string; name: string };
 
@@ -18,9 +19,7 @@ export function Sidebar({ teams }: { teams: Team[] }) {
 
       <nav className="flex-1 flex flex-col gap-6 px-4 pb-6 overflow-y-auto">
         <div>
-          <p className="text-[11px] font-semibold text-text-muted uppercase tracking-wider px-2.5 mb-2.5">
-            Mina lag
-          </p>
+          <SectionLabel className="px-2.5 mb-2.5">Mina lag</SectionLabel>
 
           {teams.length === 0 ? (
             <p className="text-sm text-text-muted px-2.5 mb-2">

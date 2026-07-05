@@ -32,9 +32,9 @@ export function CloseCollectionButton({
       type="button"
       onClick={handleClick}
       disabled={isPending}
-      className={`text-xs font-medium px-3 min-h-11 inline-flex items-center justify-center rounded border transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed ${
+      className={`text-xs font-medium px-3 min-h-11 inline-flex items-center justify-center rounded-md border shadow-sm transition-colors whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed ${
         isActive
-          ? "border-surface-border text-text-muted hover:border-danger hover:text-danger"
+          ? "bg-white border-surface-border text-text-muted hover:border-danger hover:text-danger"
           : "border-success/30 text-success bg-success-light hover:bg-success-light"
       }`}
     >

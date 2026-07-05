@@ -2,6 +2,10 @@
 
 import { useActionState, useState } from "react";
 import { createCollection, type CollectionState } from "../actions";
+import { Card } from "@/components/ui/Card";
+import { Field } from "@/components/ui/Field";
+import { Button } from "@/components/ui/Button";
+import { inputClass, textareaClass } from "@/lib/ui";
 
 const initial: CollectionState = { error: null };
 
@@ -56,10 +60,7 @@ export function CollectionForm({
     extras.filter((e) => e.trim()).length;
 
   return (
-    <form
-      action={action}
-      className="flex flex-col gap-5"
-    >
+    <form action={action} className="flex flex-col gap-5">
       {state.error && (
         <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
           {state.error}
@@ -78,14 +79,13 @@ export function CollectionForm({
           </p>
         </div>
       ) : (
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">Välj lag/grupp</span>
+        <Field label="Välj lag/grupp" helperText="Medlemmarna hämtas från lagets medlemslista.">
           <select
             name="team_id"
             required
             value={selectedTeamId}
             onChange={(e) => handleTeamChange(e.target.value)}
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+            className={inputClass}
           >
             {teams.map((t) => (
               <option key={t.id} value={t.id}>
@@ -93,57 +93,45 @@ export function CollectionForm({
               </option>
             ))}
           </select>
-          <p className="text-xs text-text-muted">
-            Medlemmarna hämtas från lagets medlemslista.
-          </p>
-        </label>
+        </Field>
       )}
 
       {/* Collection details */}
-      <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-4">
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">Rubrik</span>
+      <Card className="p-5 flex flex-col gap-4">
+        <Field label="Rubrik">
           <input
             name="title"
             type="text"
             required
             autoFocus
             placeholder="t.ex. Höstterminsavgift 2026"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+            className={inputClass}
           />
-        </label>
+        </Field>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            Beskrivning{" "}
-            <span className="text-text-muted font-normal">(valfritt)</span>
-          </span>
+        <Field label="Beskrivning" optional>
           <input
             name="description"
             type="text"
             placeholder="t.ex. Avgift för höstterminens träningar"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+            className={inputClass}
           />
-        </label>
+        </Field>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            Betalningsinstruktioner{" "}
-            <span className="text-text-muted font-normal">(valfritt)</span>
-          </span>
+        <Field
+          label="Betalningsinstruktioner"
+          optional
+          helperText="Lagkassan hanterar inte själva betalningen ännu. Instruktionerna visas för medlemmen på betalningssidan."
+        >
           <textarea
             name="payment_instructions"
             rows={3}
             placeholder="Exempel: Swisha 850 kr till 070-xxx xx xx och skriv spelarens namn."
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors resize-none"
+            className={textareaClass}
           />
-          <p className="text-xs text-text-muted">
-            Lagkassan hanterar inte själva betalningen ännu. Instruktionerna visas för medlemmen på betalningssidan.
-          </p>
-        </label>
+        </Field>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">Belopp (kr)</span>
+        <Field label="Belopp (kr)">
           <div className="relative">
             <input
               name="amount"
@@ -152,29 +140,21 @@ export function CollectionForm({
               min="1"
               step="1"
               placeholder="299"
-              className="w-full border border-surface-border rounded-md px-3 py-2 pr-10 text-sm font-mono bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+              className={`${inputClass} pr-10 font-mono`}
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-text-muted pointer-events-none">
               kr
             </span>
           </div>
-        </label>
+        </Field>
 
-        <label className="flex flex-col gap-1.5">
-          <span className="text-sm font-medium text-text-primary">
-            Sista betalningsdag{" "}
-            <span className="text-text-muted font-normal">(valfritt)</span>
-          </span>
-          <input
-            name="deadline"
-            type="date"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
-          />
-        </label>
-      </div>
+        <Field label="Sista betalningsdag" optional>
+          <input name="deadline" type="date" className={inputClass} />
+        </Field>
+      </Card>
 
       {/* Roster checklist */}
-      <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card flex flex-col gap-3">
+      <Card className="p-5 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <p className="text-sm font-semibold text-text-primary">
             Vem ska betala?
@@ -230,7 +210,7 @@ export function CollectionForm({
               value={val}
               onChange={(e) => setExtra(i, e.target.value)}
               placeholder="Namn"
-              className="flex-1 border border-surface-border rounded-md px-3 py-2 text-sm bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+              className={inputClass}
             />
             <button
               type="button"
@@ -250,15 +230,11 @@ export function CollectionForm({
         >
           + Lägg till person som inte är i listan
         </button>
-      </div>
+      </Card>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="w-full bg-accent text-white font-semibold text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-      >
+      <Button type="submit" variant="primary" disabled={isPending} className="w-full">
         {isPending ? "Skapar…" : "Skapa och hämta länk"}
-      </button>
+      </Button>
     </form>
   );
 }

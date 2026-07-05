@@ -4,6 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
 import { PaymentForm } from "./PaymentForm";
 import { RosterPaymentFlow } from "./RosterPaymentFlow";
+import { Card } from "@/components/ui/Card";
+import { SectionLabel } from "@/components/ui/SectionLabel";
 
 export default async function PublicPaymentPage({
   params,
@@ -65,13 +67,13 @@ export default async function PublicPaymentPage({
 
       <main className="flex-1 max-w-lg mx-auto w-full px-6 py-10 flex flex-col gap-6">
         {/* Collection info */}
-        <div className="bg-white border border-surface-border rounded-lg p-6 shadow-card">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1.5">
+        <Card className="p-6">
+          <SectionLabel className="mb-1.5">
             {teamName}
             {collection.group_label && (
               <span className="ml-2 normal-case font-medium text-text-muted">· {collection.group_label}</span>
             )}
-          </p>
+          </SectionLabel>
           <h1 className="text-[22px] leading-tight font-bold text-text-primary">{collection.title}</h1>
           {collection.description && (
             <p className="text-sm text-text-muted mt-1.5">{collection.description}</p>
@@ -97,13 +99,11 @@ export default async function PublicPaymentPage({
               {paidCount} {paidCount === 1 ? "person har" : "personer har"} redan betalt.
             </p>
           )}
-        </div>
+        </Card>
 
         {/* Så fungerar det — explicit steps so members never think Lagkassan takes the payment */}
-        <div className="bg-white border border-surface-border rounded-lg p-5 shadow-card">
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
-            Så fungerar det
-          </p>
+        <Card className="p-5">
+          <SectionLabel className="mb-3">Så fungerar det</SectionLabel>
           <ol className="flex flex-col gap-2.5">
             {[
               "Läs vad insamlingen gäller ovan — belopp och sista betalningsdag.",
@@ -119,21 +119,19 @@ export default async function PublicPaymentPage({
               </li>
             ))}
           </ol>
-        </div>
+        </Card>
 
         {/* Payment instructions — shown when the organizer has set them */}
         {collection.payment_instructions ? (
-          <div className="bg-white border border-surface-border rounded-lg p-6 shadow-card flex flex-col gap-2">
-            <p className="text-xs font-semibold text-text-muted uppercase tracking-wider">
-              Betalningsinstruktioner
-            </p>
+          <Card className="p-6 flex flex-col gap-2">
+            <SectionLabel>Betalningsinstruktioner</SectionLabel>
             <p className="text-sm text-text-primary whitespace-pre-wrap">
               {collection.payment_instructions}
             </p>
             <p className="text-xs text-text-muted mt-1">
               Följ instruktionerna ovan och markera sedan att du har betalat.
             </p>
-          </div>
+          </Card>
         ) : (
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
             <p className="text-xs text-amber-800 leading-relaxed">

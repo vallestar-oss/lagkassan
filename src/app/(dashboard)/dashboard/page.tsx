@@ -2,6 +2,9 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CollectionCard } from "../CollectionCard";
+import { PageHeader } from "@/components/ui/PageHeader";
+import { SectionLabel } from "@/components/ui/SectionLabel";
+import { buttonClass } from "@/lib/ui";
 
 function IconPlus() {
   return (
@@ -126,15 +129,11 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-1">
-            Global översikt
-          </p>
-          <h1 className="text-2xl font-bold text-text-primary">
-            Välkommen, {firstName}!
-          </h1>
-          <p className="text-sm text-text-muted mt-0.5">
+      <PageHeader
+        eyebrow="Global översikt"
+        title={`Välkommen, ${firstName}!`}
+        subtitle={
+          <>
             {data.teams.map((t, i) => (
               <span key={t.id}>
                 {i > 0 && " · "}
@@ -153,23 +152,20 @@ export default async function DashboardPage() {
             >
               Hantera medlemmar
             </Link>
-          </p>
-        </div>
-        <Link
-          href="/collections/new"
-          className="flex items-center gap-2 bg-accent text-white text-sm font-semibold px-4 py-2.5 rounded-md hover:bg-accent-hover transition-colors shadow-sm flex-shrink-0"
-        >
-          <IconPlus />
-          Ny förfrågan
-        </Link>
-      </div>
+          </>
+        }
+        action={
+          <Link href="/collections/new" className={buttonClass("primary", "md", "flex-shrink-0")}>
+            <IconPlus />
+            Ny förfrågan
+          </Link>
+        }
+      />
 
       {/* Active collections */}
       {activeCollections.length > 0 && (
         <section>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
-            Aktiva ({activeCollections.length})
-          </p>
+          <SectionLabel className="mb-3">Aktiva ({activeCollections.length})</SectionLabel>
           <div className="flex flex-col gap-3">
             {activeCollections.map((c) => (
               <CollectionCard key={c.id} collection={c} showTeamName />
@@ -192,10 +188,7 @@ export default async function DashboardPage() {
               Skapa din första förfrågan och dela länken med medlemmarna.
             </p>
           </div>
-          <Link
-            href="/collections/new"
-            className="text-sm font-semibold bg-accent text-white px-4 py-2 rounded-md hover:bg-accent-hover transition-colors"
-          >
+          <Link href="/collections/new" className={buttonClass("primary")}>
             Skapa din första förfrågan →
           </Link>
         </div>
@@ -204,9 +197,7 @@ export default async function DashboardPage() {
       {/* Closed collections */}
       {closedCollections.length > 0 && (
         <section>
-          <p className="text-xs font-semibold text-text-muted uppercase tracking-wider mb-3">
-            Avslutade ({closedCollections.length})
-          </p>
+          <SectionLabel className="mb-3">Avslutade ({closedCollections.length})</SectionLabel>
           <div className="flex flex-col gap-3">
             {closedCollections.map((c) => (
               <CollectionCard key={c.id} collection={c} showTeamName />
