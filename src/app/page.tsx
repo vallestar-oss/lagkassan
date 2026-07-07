@@ -42,6 +42,22 @@ function IconUsers({ className }: { className?: string }) {
   );
 }
 
+function IconShield({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.75} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m-3-7.036A11.959 11.959 0 0 1 3.598 6 11.99 11.99 0 0 0 3 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285Z" />
+    </svg>
+  );
+}
+
+function IconCardOff({ className }: { className?: string }) {
+  return (
+    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-9-9.75h16.5a1.5 1.5 0 0 1 1.5 1.5v9a1.5 1.5 0 0 1-1.5 1.5H3.75a1.5 1.5 0 0 1-1.5-1.5v-9a1.5 1.5 0 0 1 1.5-1.5Z" />
+    </svg>
+  );
+}
+
 // ─── FAQ item ────────────────────────────────────────────────────────────────
 function FaqItem({ q, a }: { q: string; a: string }) {
   return (
@@ -59,7 +75,14 @@ export default function LandingPage() {
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
       <header className="border-b border-surface-border bg-surface sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
-          <span className="font-bold text-text-primary tracking-tight">Lagkassan</span>
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center flex-shrink-0">
+              <IconShield className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-text-primary tracking-tight group-hover:text-accent transition-colors">
+              Lagkassan
+            </span>
+          </Link>
           <nav className="flex items-center gap-6">
             <a href="#hur-det-fungerar" className="text-sm text-text-muted hover:text-text-primary transition-colors hidden sm:block">
               Hur det fungerar
@@ -125,14 +148,49 @@ export default function LandingPage() {
               </a>
             </div>
 
-            {/* Mock UI preview — mirrors the real three-state status model */}
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 text-sm text-text-muted">
+              <span className="flex items-center gap-1.5">
+                <IconCheck className="w-4 h-4 text-success" />
+                Gratis under pilotfasen
+              </span>
+              <span className="flex items-center gap-1.5">
+                <IconCardOff className="w-4 h-4 text-success" />
+                Inga kortuppgifter
+              </span>
+              <span className="flex items-center gap-1.5">
+                <IconUsers className="w-4 h-4 text-success" />
+                Inga konton för medlemmar
+              </span>
+            </div>
+
+            {/* Mock UI preview — mirrors the real dashboard: collection card + status list */}
             <div className="mt-16 max-w-lg mx-auto bg-white rounded-lg border border-surface-border shadow-md overflow-hidden text-left">
               <div className="bg-surface-alt border-b border-surface-border px-5 py-3 flex items-center gap-2">
                 <div className="w-2.5 h-2.5 rounded-full bg-danger/40" />
                 <div className="w-2.5 h-2.5 rounded-full bg-warning/40" />
                 <div className="w-2.5 h-2.5 rounded-full bg-success/40" />
-                <span className="ml-2 text-xs text-text-muted">Höstterminsavgift — 300 kr</span>
+                <span className="ml-2 text-xs text-text-muted">Lagkassan — IFK Testklubben</span>
               </div>
+
+              {/* Collection card — mirrors the real CollectionCard component */}
+              <div className="p-5 border-b border-surface-border">
+                <div className="flex items-center justify-between gap-4">
+                  <div>
+                    <p className="font-semibold text-[15px] text-text-primary">Höstterminsavgift</p>
+                    <p className="text-xs text-text-muted mt-1">
+                      <span className="font-mono">300 kr</span> · 30 sep 2026
+                    </p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <p className="text-sm font-bold font-mono text-text-primary tabular-nums">2/3</p>
+                    <p className="text-xs text-text-muted mt-0.5">67% markerat</p>
+                  </div>
+                </div>
+                <div className="h-2 rounded-full bg-surface-alt overflow-hidden mt-3.5">
+                  <div className="h-full rounded-full bg-accent" style={{ width: "67%" }} />
+                </div>
+              </div>
+
               <div className="divide-y divide-surface-border">
                 {[
                   { name: "Anna Lindqvist", status: "confirmed_paid" },
