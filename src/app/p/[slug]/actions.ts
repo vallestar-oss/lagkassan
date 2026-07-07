@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 
 export type PaymentState = { error: string | null; success: boolean };
@@ -42,7 +42,15 @@ export async function submitMockPayment(
   _prev: PaymentState,
   formData: FormData,
 ): Promise<PaymentState> {
-  const supabase = await createClient();
+  // The anon role has no direct table access (see migration
+  // 20260707000000_lock_down_anon_access). This public write path runs through
+  // the service-role client and is the sole gatekeeper: it validates the
+  // collection is active, the member belongs to THIS collection, and the member
+  // is still unpaid. It only ever writes payment_method:'card' (a self-report →
+  // reported_paid); it never writes 'manual', so it cannot forge a treasurer
+  // confirmation. When Stripe lands, this becomes insert-pending + Checkout and
+  // the webhook (service-role) is the only writer of 'paid'.
+  const supabase = createAdminClient();
 
   const collectionId = (formData.get("collection_id") as string | null) ?? "";
   const payerName = (formData.get("payer_name") as string | null)?.trim() ?? "";

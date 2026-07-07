@@ -1,6 +1,5 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
 import { PaymentForm } from "./PaymentForm";
 import { RosterPaymentFlow } from "./RosterPaymentFlow";
@@ -15,46 +14,31 @@ export default async function PublicPaymentPage({
   const { slug } = await params;
   const supabase = await createClient();
 
-  // Anon users can read active collections, but NOT the teams join (RLS
-  // requires team membership). Fetch collection without the join, then fetch
-  // team name via the service-role admin client which bypasses RLS.
-  const { data: collection } = await supabase
-    .from("collections")
-    .select("id, team_id, title, description, amount, deadline, payment_instructions, group_label")
-    .eq("slug", slug)
-    .eq("status", "active")
-    .single();
+  // The anon role has NO direct table access (see migration
+  // 20260707000000_lock_down_anon_access). The public page reads exactly one
+  // collection + its roster through two SECURITY DEFINER functions scoped by
+  // slug / id, so no other association's data is ever enumerable. The function
+  // also joins teams, returning the association name in the same round-trip.
+  const { data: collectionRows } = await supabase.rpc("get_public_collection", {
+    p_slug: slug,
+  });
+  const collection = collectionRows?.[0];
 
   if (!collection) notFound();
 
-  const admin = createAdminClient();
-  const [teamRes, memberRowsRes, paidCountRes] = await Promise.all([
-    admin.from("teams").select("name").eq("id", collection.team_id).single(),
+  const { data: memberRows } = await supabase.rpc(
+    "get_public_collection_members",
+    { p_collection_id: collection.id },
+  );
 
-    // Load roster for this collection. The public RLS policy allows anon reads
-    // for active collections — no auth needed.
-    supabase
-      .from("collection_members")
-      .select("id, name, status")
-      .eq("collection_id", collection.id)
-      .order("name", { ascending: true })
-      .returns<{ id: string; name: string; status: string }[]>(),
-
-    supabase
-      .from("payments")
-      .select("id", { count: "exact", head: true })
-      .eq("collection_id", collection.id)
-      .eq("status", "paid"),
-  ]);
-
-  const teamName = teamRes.data?.name ?? "";
-  const members = memberRowsRes.data ?? [];
+  const teamName = collection.team_name ?? "";
+  const members = memberRows ?? [];
   const hasRoster = members.length > 0;
 
   // Only used in the free-form fallback header ("N har redan betalt").
   const paidCount = hasRoster
     ? members.filter((m) => m.status !== "unpaid").length
-    : paidCountRes.count ?? 0;
+    : Number(collection.paid_count ?? 0);
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">

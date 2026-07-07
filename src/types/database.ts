@@ -291,7 +291,31 @@ export type Database = {
       };
     };
     Views: { [_ in never]: never };
-    Functions: { [_ in never]: never };
+    Functions: {
+      get_public_collection: {
+        Args: { p_slug: string };
+        Returns: {
+          id: string;
+          team_id: string;
+          title: string;
+          description: string | null;
+          amount: number;
+          deadline: string | null;
+          payment_instructions: string | null;
+          group_label: string | null;
+          team_name: string;
+          paid_count: number;
+        }[];
+      };
+      get_public_collection_members: {
+        Args: { p_collection_id: string };
+        Returns: {
+          id: string;
+          name: string;
+          status: string;
+        }[];
+      };
+    };
     Enums: { [_ in never]: never };
     CompositeTypes: { [_ in never]: never };
   };
