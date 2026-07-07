@@ -78,7 +78,9 @@ export async function requestPasswordReset(
   const email = (formData.get("email") as string | null)?.trim() ?? "";
 
   if (email) {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    // `||` (not `??`) intentionally — an accidentally empty-string env var
+    // must also fall back, not just an unset one.
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${appUrl}/auth/update-password`,
     });

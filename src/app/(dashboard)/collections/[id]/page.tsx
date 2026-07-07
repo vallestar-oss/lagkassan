@@ -91,7 +91,10 @@ export default async function CollectionDetailPage({
     : paymentList.filter((p) => p.status === "paid").reduce((sum, p) => sum + p.amount, 0);
   const remainingAmount = totalAmount - confirmedAmount;
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  // `||` (not `??`) intentionally — an accidentally empty-string env var must
+  // also fall back, not just an unset one. Without this, a misconfigured
+  // deploy silently turns the share link/QR code into a broken relative path.
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
   const shareUrl = `${appUrl}/p/${collection.slug}`;
   const canEdit = ["owner", "treasurer"].includes(membership.role);
   const teamName = (collection.teams as { name: string } | null)?.name ?? "";
