@@ -158,8 +158,15 @@ function RosterRow({
   async function remove() {
     if (!window.confirm(`Ta bort ${member.name} från laget?`)) return;
     setBusy(true);
-    await deleteRosterMember(member.id, teamId);
-    // revalidatePath refreshes the page; this row drops out of the list.
+    setErr(null);
+    const res = await deleteRosterMember(member.id, teamId);
+    // On success, revalidatePath refreshes the page and this row drops out of
+    // the list — no need to reset busy. On failure, the row stays and must
+    // recover to a usable state.
+    if (res.error) {
+      setBusy(false);
+      setErr(res.error);
+    }
   }
 
   if (editing) {
@@ -187,7 +194,7 @@ function RosterRow({
   }
 
   return (
-    <li className="flex items-center justify-between px-5 py-3 gap-3 hover:bg-surface-alt/40 transition-colors">
+    <li className="flex flex-wrap items-center justify-between px-5 py-3 gap-x-3 gap-y-1.5 hover:bg-surface-alt/40 transition-colors">
       <div className="flex items-center gap-3 flex-1 min-w-0">
         <div className="w-8 h-8 rounded-full bg-accent-light text-accent text-xs font-semibold flex items-center justify-center flex-shrink-0">
           {getInitials(member.name)}
@@ -217,6 +224,7 @@ function RosterRow({
           </Button>
         </div>
       )}
+      {err && <p className="w-full text-xs text-danger">{err}</p>}
     </li>
   );
 }
