@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MobileMenu } from "./MobileMenu";
 
 // ─── Icons (inline SVG, Heroicons outline style) ────────────────────────────
 function IconLink({ className }: { className?: string }) {
@@ -73,7 +74,7 @@ export default function LandingPage() {
   return (
     <div className="flex flex-col min-h-full">
       {/* ── Nav ──────────────────────────────────────────────────────────── */}
-      <header className="border-b border-surface-border bg-surface sticky top-0 z-10">
+      <header className="relative border-b border-surface-border bg-surface sticky top-0 z-10">
         <div className="max-w-5xl mx-auto px-6 h-14 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
             <div className="w-7 h-7 rounded-md bg-accent flex items-center justify-center flex-shrink-0">
@@ -83,7 +84,7 @@ export default function LandingPage() {
               Lagkassan
             </span>
           </Link>
-          <nav className="flex items-center gap-6">
+          <nav className="flex items-center gap-3 sm:gap-6">
             <a href="#hur-det-fungerar" className="text-sm text-text-muted hover:text-text-primary transition-colors hidden sm:block">
               Hur det fungerar
             </a>
@@ -95,7 +96,7 @@ export default function LandingPage() {
             </Link>
             <Link
               href="/login"
-              className="text-sm text-text-muted hover:text-text-primary transition-colors"
+              className="text-sm text-text-muted hover:text-text-primary transition-colors hidden sm:block"
             >
               Logga in
             </Link>
@@ -105,6 +106,7 @@ export default function LandingPage() {
             >
               Skapa konto
             </Link>
+            <MobileMenu />
           </nav>
         </div>
       </header>
