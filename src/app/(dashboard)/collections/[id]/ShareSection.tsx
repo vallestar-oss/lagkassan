@@ -7,20 +7,12 @@ import { SectionLabel } from "@/components/ui/SectionLabel";
 export function ShareSection({
   shareUrl,
   qrDataUrl,
-  unpaidCount,
-  reminderText,
-  canManage,
 }: {
   shareUrl: string;
   qrDataUrl: string;
-  unpaidCount: number;
-  reminderText: string;
-  canManage: boolean;
 }) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [linkFailed, setLinkFailed] = useState(false);
-  const [messageCopied, setMessageCopied] = useState(false);
-  const [messageFailed, setMessageFailed] = useState(false);
 
   async function copyLink() {
     try {
@@ -31,18 +23,6 @@ export function ShareSection({
     } catch {
       setLinkFailed(true);
       setTimeout(() => setLinkFailed(false), 3000);
-    }
-  }
-
-  async function copyMessage() {
-    try {
-      await navigator.clipboard.writeText(reminderText);
-      setMessageFailed(false);
-      setMessageCopied(true);
-      setTimeout(() => setMessageCopied(false), 2000);
-    } catch {
-      setMessageFailed(true);
-      setTimeout(() => setMessageFailed(false), 3000);
     }
   }
 
@@ -80,33 +60,6 @@ export function ShareSection({
           <p className="text-xs text-text-muted leading-relaxed">
             Dela länken i lagets gruppchatt. Alla använder samma länk och väljer sitt eget namn.
           </p>
-
-          {canManage && (
-            <div className="flex flex-col gap-2 mt-1 pt-3 border-t border-surface-border">
-              <p className="text-xs text-text-muted">
-                {unpaidCount === 0
-                  ? "Alla har markerat eller bekräftats som betalda."
-                  : `${unpaidCount} ${unpaidCount === 1 ? "person har" : "personer har"} inte markerat betalning ännu.`}
-              </p>
-
-              <button
-                type="button"
-                onClick={copyMessage}
-                className={`self-start text-sm font-medium px-4 min-h-11 inline-flex items-center justify-center rounded-md border transition-colors ${
-                  messageCopied
-                    ? "bg-success-light border-success/30 text-success"
-                    : "border-surface-border text-text-muted hover:border-accent hover:text-accent bg-white"
-                }`}
-              >
-                {messageCopied ? "Kopierad!" : "Kopiera påminnelse"}
-              </button>
-              {messageFailed && (
-                <p className="text-xs text-danger">
-                  Kunde inte kopiera automatiskt. Försök igen.
-                </p>
-              )}
-            </div>
-          )}
         </div>
 
         <div className="flex flex-row sm:flex-col items-center gap-2 flex-shrink-0 self-center sm:self-start sm:pl-5 sm:border-l border-surface-border">
@@ -118,7 +71,13 @@ export function ShareSection({
             height={88}
             className="border border-surface-border rounded-md opacity-90"
           />
-          <p className="text-[11px] text-text-muted text-center max-w-[88px]">Eller skanna</p>
+          <a
+            href={qrDataUrl}
+            download="lagkassan-qr-kod.png"
+            className="text-[11px] text-accent hover:underline text-center max-w-[88px]"
+          >
+            Ladda ner
+          </a>
         </div>
       </div>
     </Card>

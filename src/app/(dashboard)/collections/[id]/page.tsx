@@ -96,12 +96,6 @@ export default async function CollectionDetailPage({
   const canEdit = ["owner", "treasurer"].includes(membership.role);
   const teamName = (collection.teams as { name: string } | null)?.name ?? "";
 
-  const deadlineLine = collection.deadline
-    ? ` Sista betalningsdag: ${formatSwedishDate(collection.deadline)}.`
-    : "";
-
-  const reminderText = `Hej! Påminnelse om betalning för ${collection.title} (${formatOre(collection.amount)}).${deadlineLine} Betala via Swish eller bank enligt betalningsinstruktionerna, öppna sedan länken, välj ditt eget namn och markera att du har betalat: ${shareUrl}`;
-
   // Generated server-side (pure JS, no canvas) so the client ships zero extra
   // QR code JS — just an <img> with a data: URL.
   const qrDataUrl = await QRCode.toDataURL(shareUrl, { margin: 1, width: 240 });
@@ -137,14 +131,8 @@ export default async function CollectionDetailPage({
         }
       />
 
-      {/* Share section — visible to every team member; the reminder helper is organizer-only */}
-      <ShareSection
-        shareUrl={shareUrl}
-        qrDataUrl={qrDataUrl}
-        unpaidCount={unpaidCount}
-        reminderText={reminderText}
-        canManage={canEdit}
-      />
+      {/* Share section — visible to every team member */}
+      <ShareSection shareUrl={shareUrl} qrDataUrl={qrDataUrl} />
 
       {/* Status summary */}
       {hasRoster && (
