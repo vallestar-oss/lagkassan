@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { CollectionCard } from "../CollectionCard";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { buttonClass } from "@/lib/ui";
@@ -128,6 +129,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex flex-col gap-8">
+      <AutoRefresh />
       {/* Header */}
       <PageHeader
         eyebrow="Global översikt"

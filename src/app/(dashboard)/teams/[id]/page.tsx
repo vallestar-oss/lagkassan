@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { RosterManager } from "./RosterManager";
 import { CollectionCard, type CollectionCardData } from "../../CollectionCard";
 import { OnboardingSteps } from "../../OnboardingSteps";
+import { AutoRefresh } from "@/components/AutoRefresh";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { buttonClass } from "@/lib/ui";
@@ -166,6 +167,7 @@ export default async function TeamPage({
 
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
+      <AutoRefresh />
       <PageHeader
         backHref="/dashboard"
         backLabel="← Översikt"
