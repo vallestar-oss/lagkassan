@@ -71,6 +71,22 @@ button:disabled {
   cursor: not-allowed;
 }
 
+/* Tactile press feedback on every button — a small zoom on hover and a
+   slight shrink on click, so it's obvious something is interactive before
+   you even read it. Buttons using buttonClass() already carry the same
+   scale values via Tailwind utilities; this covers plain <button>
+   elements elsewhere (filter pills, toggles, etc.) so the feel is
+   consistent everywhere, not just on the shared Button component. */
+button:not(:disabled) {
+  transition: transform 150ms ease-out, background-color 150ms ease-out, border-color 150ms ease-out, color 150ms ease-out;
+}
+button:not(:disabled):hover {
+  transform: scale(1.03);
+}
+button:not(:disabled):active {
+  transform: scale(0.97);
+}
+
 /* ─── Typography helpers ─────────────────────────────────────────────────── */
 /* Amounts always in mono — use class="font-mono" on SEK figures */
 

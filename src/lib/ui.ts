@@ -10,7 +10,7 @@ export type ButtonVariant = "primary" | "secondary" | "ghost" | "destructive" | 
 export type ButtonSize = "sm" | "md" | "chip";
 
 const buttonBase =
-  "inline-flex items-center justify-center gap-1.5 font-medium rounded-md transition-colors whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed";
+  "inline-flex items-center justify-center gap-1.5 font-medium rounded-md transition-all duration-150 ease-out whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed enabled:hover:scale-[1.03] enabled:active:scale-[0.97]";
 
 const buttonSizes: Record<ButtonSize, string> = {
   sm: "text-xs px-3 min-h-9",
