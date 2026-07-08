@@ -66,16 +66,6 @@ export function PaymentForm({
           />
         </Field>
 
-        <Field label="E-postadress" optional>
-          <input
-            name="payer_email"
-            type="email"
-            autoComplete="email"
-            placeholder="anna@exempel.se"
-            className={inputClass}
-          />
-        </Field>
-
         <div className="flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt rounded-md px-3 py-2">
           <svg className="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />

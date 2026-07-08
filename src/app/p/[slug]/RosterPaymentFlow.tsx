@@ -4,10 +4,8 @@ import { useActionState, useState } from "react";
 import { submitMockPayment, type PaymentState } from "./actions";
 import { formatOre } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
-import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
-import { inputClass } from "@/lib/ui";
 
 type Member = { id: string; name: string; status: string };
 
@@ -135,16 +133,6 @@ export function RosterPaymentFlow({
                   the DB (collections.amount), never the client. */}
               <input type="hidden" name="payer_name" value={selectedMember.name} />
               <input type="hidden" name="collection_member_id" value={selectedMember.id} />
-
-              <Field label="E-postadress" optional>
-                <input
-                  name="payer_email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="din@email.se"
-                  className={inputClass}
-                />
-              </Field>
 
               <div className="flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt rounded-md px-3 py-2">
                 <svg className="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
