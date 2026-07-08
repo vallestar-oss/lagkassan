@@ -31,7 +31,9 @@ export function RosterManager({
   const [state, action, isPending] = useActionState(addRosterMember, initial);
   const formRef = useRef<HTMLFormElement>(null);
   const wasPending = useRef(false);
-  const [showBulk, setShowBulk] = useState(false);
+  // Bulk paste is the default — most organizers add a whole roster at once,
+  // and typing names one at a time is the slower, secondary path.
+  const [showBulk, setShowBulk] = useState(true);
 
   // Clear the add form only after a submit that completed without an error.
   useEffect(() => {
@@ -50,9 +52,9 @@ export function RosterManager({
             <button
               type="button"
               onClick={() => setShowBulk((v) => !v)}
-              className={buttonClass("subtle", "sm")}
+              className={buttonClass("secondary", "sm")}
             >
-              {showBulk ? "Lägg till en i taget" : "Klistra in lista"}
+              {showBulk ? "Lägg till en i taget istället" : "Lägg till flera samtidigt →"}
             </button>
           </div>
 
