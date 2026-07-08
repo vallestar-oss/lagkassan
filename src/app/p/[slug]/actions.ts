@@ -2,6 +2,7 @@
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export type PaymentState = { error: string | null; success: boolean };
 
@@ -50,6 +51,18 @@ export async function submitMockPayment(
   // reported_paid); it never writes 'manual', so it cannot forge a treasurer
   // confirmation. When Stripe lands, this becomes insert-pending + Checkout and
   // the webhook (service-role) is the only writer of 'paid'.
+  // Public, unauthenticated write path — anyone with the link can call this
+  // repeatedly. A per-IP cap keeps a scripted spam loop from flooding the
+  // database with junk payment rows.
+  const ip = await getClientIp();
+  const { ok, retryAfterSeconds } = rateLimit(`submit-payment:${ip}`, 10, 60_000);
+  if (!ok) {
+    return {
+      error: `För många försök. Vänta ${retryAfterSeconds} sekunder och försök igen.`,
+      success: false,
+    };
+  }
+
   const supabase = createAdminClient();
 
   const collectionId = (formData.get("collection_id") as string | null) ?? "";
