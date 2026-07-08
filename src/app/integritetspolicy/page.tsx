@@ -97,7 +97,7 @@ export default function PrivacyPolicyPage() {
               betalning, och ge kassören en samlad översikt. Den rättsliga grunden är att
               behandlingen är nödvändig för att fullgöra avtalet om att tillhandahålla
               tjänsten till kontoinnehavaren, samt kontoinnehavarens berättigade intresse av
-              att administrera sin förenings insamlingar.
+              att administrera sina föreningars förfrågningar.
             </p>
             <p>
               Om du är medlem i ett lag eller en förening som använder Lagkassan är det
@@ -117,7 +117,7 @@ export default function PrivacyPolicyPage() {
 
           <Section title="Hur länge sparas uppgifterna?">
             <p>
-              Uppgifter sparas så länge kontot eller insamlingen är aktiv. Du kan när som
+              Uppgifter sparas så länge kontot eller förfrågan är aktiv. Du kan när som
               helst begära att ditt konto och tillhörande data raderas genom att kontakta{" "}
               <a href="mailto:hej@lagkassan.se" className="text-accent hover:underline">
                 hej@lagkassan.se

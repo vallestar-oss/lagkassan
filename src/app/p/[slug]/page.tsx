@@ -90,7 +90,7 @@ export default async function PublicPaymentPage({
           <SectionLabel className="mb-3">Så fungerar det</SectionLabel>
           <ol className="flex flex-col gap-2.5">
             {[
-              "Läs vad insamlingen gäller ovan — belopp och sista betalningsdag.",
+              "Läs vad förfrågan gäller ovan — belopp och sista betalningsdag.",
               "Betala externt enligt instruktionerna nedan, via Swish eller bank.",
               "Välj ditt eget namn i listan.",
               "Markera dig som betald. Lagkassan sparar bara statusen — inga pengar går via Lagkassan.",

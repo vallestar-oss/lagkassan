@@ -242,7 +242,7 @@ export function MemberList({
                             size="chip"
                             disabled={pendingKey === removeKey}
                             onClick={() => {
-                              if (!window.confirm(`Ta bort ${member.name} från insamlingen?`)) return;
+                              if (!window.confirm(`Ta bort ${member.name} från förfrågan?`)) return;
                               runAction(removeKey, () => removeAction(member.id, collectionId));
                             }}
                             aria-label={`Ta bort ${member.name}`}

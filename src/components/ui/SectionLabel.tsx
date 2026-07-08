@@ -1,7 +1,7 @@
 import { cn } from "@/lib/ui";
 
 // The small uppercase muted label used above every section/card title
-// ("MEDLEMMAR", "DELA", "INSAMLINGAR", stat card labels, ...).
+// ("MEDLEMMAR", "DELA", "FÖRFRÅGNINGAR", stat card labels, ...).
 export function SectionLabel({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p

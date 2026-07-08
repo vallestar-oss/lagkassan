@@ -116,7 +116,7 @@ export default async function TeamPage({
 
   const collectionsSection = (
     <section>
-      <SectionLabel className="mb-3">Insamlingar</SectionLabel>
+      <SectionLabel className="mb-3">Förfrågningar</SectionLabel>
 
       {collections.length === 0 ? (
         showMembersFirst ? (
@@ -131,7 +131,7 @@ export default async function TeamPage({
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-text-primary">Inga insamlingar för det här laget ännu</p>
+              <p className="font-semibold text-text-primary">Inga förfrågningar för det här laget ännu</p>
               <p className="text-sm text-text-muted mt-1 max-w-xs">
                 Skapa en förfrågan och dela länken — medlemmarna betalar utanför Lagkassan.
               </p>
