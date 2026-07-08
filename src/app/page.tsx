@@ -360,7 +360,6 @@ export default function LandingPage() {
                   "Du anger betalningsinstruktioner — t.ex. Swish-nummer eller bankgiro",
                   "Medlemmen betalar externt och markerar sedan att betalningen är gjord",
                   "Kassören ser vem som markerat sig som betald och kontrollerar mot kontoutdraget",
-                  "Lagkassan hanterar inte pengar — ingen kortinformation samlas in",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-text-muted">
                     <IconCheck className="w-4 h-4 mt-0.5 text-success flex-shrink-0" />

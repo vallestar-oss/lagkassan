@@ -138,10 +138,6 @@ export default async function PublicPaymentPage({
             hasInstructions={!!collection.payment_instructions}
           />
         )}
-
-        <p className="text-xs text-text-muted text-center">
-          Lagkassan hanterar inga pengar. Betalningar sker via Swish eller bank.
-        </p>
       </main>
     </div>
   );

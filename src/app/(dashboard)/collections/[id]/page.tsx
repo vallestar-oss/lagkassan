@@ -163,16 +163,6 @@ export default async function CollectionDetailPage({
         <StatCard label="Kvar att bekräfta" value={formatOre(remainingAmount)} />
       </div>
 
-      {/* Pilot disclaimer */}
-      <div className="flex items-start gap-2.5 bg-surface-alt/70 rounded-lg px-4 py-3.5">
-        <svg className="w-4 h-4 text-text-muted mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
-        </svg>
-        <p className="text-xs text-text-muted leading-relaxed">
-          Lagkassan hanterar inte betalningar. Kontrollera rapporterade betalningar mot Swish eller bank innan du bekräftar.
-        </p>
-      </div>
-
       {/* Missing payment instructions warning — active collections only */}
       {collection.status === "active" && !collection.payment_instructions && (
         <div className="flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
