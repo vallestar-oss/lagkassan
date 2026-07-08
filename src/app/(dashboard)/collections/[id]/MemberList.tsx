@@ -5,6 +5,7 @@ import { formatOre, formatSwedishDateTime } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { ExportCsvButton } from "@/components/ExportCsvButton";
 import { inputClass, cardClass, cn } from "@/lib/ui";
 
 type Member = {
@@ -24,9 +25,20 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "confirmed_paid",label: "Bekräftat betalt" },
 ];
 
+const STATUS_LABELS: Record<string, string> = {
+  unpaid: "Ej betald",
+  reported_paid: "Rapporterat betalt",
+  confirmed_paid: "Bekräftat av kassör",
+};
+
+function toFilename(title: string): string {
+  return title.trim().replace(/[^a-zA-Z0-9åäöÅÄÖ _-]/g, "").replace(/\s+/g, "-") || "forfragan";
+}
+
 export function MemberList({
   members,
   collectionId,
+  collectionTitle,
   collectionAmount,
   collectionStatus,
   canEdit,
@@ -37,6 +49,7 @@ export function MemberList({
 }: {
   members: Member[];
   collectionId: string;
+  collectionTitle: string;
   collectionAmount: number;
   collectionStatus: string;
   canEdit: boolean;
@@ -118,6 +131,20 @@ export function MemberList({
               </span>
             </button>
           ))}
+        </div>
+        <div className="flex justify-end">
+          <ExportCsvButton
+            filename={`${toFilename(collectionTitle)}-deltagare.csv`}
+            headers={["Namn", "Belopp (kr)", "Status", "Rapporterat", "Bekräftat"]}
+            rows={members.map((m) => [
+              m.name,
+              collectionAmount / 100,
+              STATUS_LABELS[m.status] ?? m.status,
+              m.reported_at ? formatSwedishDateTime(m.reported_at) : "",
+              m.confirmed_at ? formatSwedishDateTime(m.confirmed_at) : "",
+            ])}
+            label="Exportera till Excel/CSV"
+          />
         </div>
       </div>
 

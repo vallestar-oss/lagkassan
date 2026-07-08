@@ -1,7 +1,7 @@
 import { notFound, redirect } from "next/navigation";
 import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
-import { formatOre, formatSwedishDate } from "@/lib/utils";
+import { formatOre, formatSwedishDate, formatSwedishDateTime } from "@/lib/utils";
 import {
   markPaid,
   markMemberPaid,
@@ -14,6 +14,7 @@ import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
 import { MemberList } from "./MemberList";
 import { AutoRefresh } from "@/components/AutoRefresh";
+import { ExportCsvButton } from "@/components/ExportCsvButton";
 import { ShareSection } from "./ShareSection";
 import { CloseCollectionButton } from "./CloseCollectionButton";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -190,6 +191,7 @@ export default async function CollectionDetailPage({
         <MemberList
           members={rosterMembers}
           collectionId={id}
+          collectionTitle={collection.title}
           collectionAmount={collection.amount}
           collectionStatus={collection.status}
           canEdit={canEdit}
@@ -201,11 +203,30 @@ export default async function CollectionDetailPage({
       ) : (
         /* Free-form: show individual payment rows */
         <Card className="overflow-hidden">
-          <div className="px-5 py-4 border-b border-surface-border flex items-center justify-between bg-surface-alt/40">
-            <SectionLabel>Rapporterade betalningar</SectionLabel>
-            <Badge variant={collection.status === "active" ? "success" : "neutral"}>
-              {collection.status === "active" ? "Aktiv" : "Stängd"}
-            </Badge>
+          <div className="px-5 py-4 border-b border-surface-border flex flex-col gap-2 bg-surface-alt/40">
+            <div className="flex items-center justify-between">
+              <SectionLabel>Rapporterade betalningar</SectionLabel>
+              <Badge variant={collection.status === "active" ? "success" : "neutral"}>
+                {collection.status === "active" ? "Aktiv" : "Stängd"}
+              </Badge>
+            </div>
+            {paymentList.length > 0 && (
+              <div className="flex justify-end">
+                <ExportCsvButton
+                  filename={`${collection.slug}-betalningar.csv`}
+                  headers={["Namn", "E-post", "Belopp (kr)", "Status", "Skapad", "Betald"]}
+                  rows={paymentList.map((p) => [
+                    p.payer_name,
+                    p.payer_email ?? "",
+                    p.amount / 100,
+                    p.status === "paid" ? "Betald" : "Väntar",
+                    formatSwedishDateTime(p.created_at),
+                    p.paid_at ? formatSwedishDateTime(p.paid_at) : "",
+                  ])}
+                  label="Exportera till Excel/CSV"
+                />
+              </div>
+            )}
           </div>
           {paymentList.length === 0 ? (
             <div className="px-5 py-10 text-center">
