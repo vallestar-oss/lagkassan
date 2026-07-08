@@ -100,6 +100,70 @@ export default async function TeamPage({
   const hasMembers = (roster ?? []).length > 0;
   const hasCollections = collections.length > 0;
 
+  // First-time flow: an organizer who hasn't added members yet gets the
+  // roster form front-and-center — not a "scroll down" link — because people
+  // click the first prominent thing on the page, not the thing they had to
+  // read about. The collections section (with its own big CTA) is pushed
+  // below and quieted down so it doesn't compete for the first click.
+  const showMembersFirst = canManage && !hasMembers;
+
+  const membersSection = (
+    <div id="medlemmar" className="flex flex-col gap-3 scroll-mt-6">
+      <SectionLabel>Medlemmar</SectionLabel>
+      <RosterManager teamId={team.id} members={roster ?? []} canManage={canManage} />
+    </div>
+  );
+
+  const collectionsSection = (
+    <section>
+      <SectionLabel className="mb-3">Insamlingar</SectionLabel>
+
+      {collections.length === 0 ? (
+        showMembersFirst ? (
+          <p className="text-sm text-text-muted">
+            Lägg till medlemmar ovan innan du skapar din första förfrågan.
+          </p>
+        ) : (
+          <div className="border border-surface-border border-dashed rounded-lg bg-surface-alt/40 p-12 flex flex-col items-center text-center gap-4">
+            <div className="w-12 h-12 rounded-full bg-accent-light flex items-center justify-center">
+              <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-text-primary">Inga insamlingar för det här laget ännu</p>
+              <p className="text-sm text-text-muted mt-1 max-w-xs">
+                Skapa en förfrågan och dela länken — medlemmarna betalar utanför Lagkassan.
+              </p>
+            </div>
+            <Link href={`/collections/new?team=${team.id}`} className={buttonClass("primary")}>
+              Skapa första förfrågan →
+            </Link>
+          </div>
+        )
+      ) : (
+        <div className="flex flex-col gap-6">
+          {activeCollections.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-text-muted">Aktiva ({activeCollections.length})</p>
+              {activeCollections.map((c) => (
+                <CollectionCard key={c.id} collection={c} />
+              ))}
+            </div>
+          )}
+          {closedCollections.length > 0 && (
+            <div className="flex flex-col gap-3">
+              <p className="text-xs text-text-muted">Avslutade ({closedCollections.length})</p>
+              {closedCollections.map((c) => (
+                <CollectionCard key={c.id} collection={c} />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </section>
+  );
+
   return (
     <div className="flex flex-col gap-6 max-w-2xl">
       <PageHeader
@@ -118,77 +182,25 @@ export default async function TeamPage({
         }
       />
 
-      {/* Onboarding — guide the organizer to the next step */}
-      {canManage && !hasMembers && (
-        <div className="flex flex-col gap-4">
+      {showMembersFirst ? (
+        <>
           <OnboardingSteps current={2} />
           <div className="bg-accent-light border border-accent/20 rounded-lg p-4 flex flex-col gap-1">
-            <p className="text-sm font-semibold text-text-primary">Lägg till medlemmar</p>
+            <p className="text-sm font-semibold text-text-primary">Steg 1: Lägg till medlemmar</p>
             <p className="text-sm text-text-muted">
-              Lägg till namnen på dem som ska betala. Namnen används sedan när du skapar en betalningsförfrågan för laget.{" "}
-              <a href="#medlemmar" className="text-accent hover:underline font-medium">
-                Lägg till nu ↓
-              </a>
+              Lägg till namnen på dem som ska betala nedan. Namnen används sedan när du skapar en betalningsförfrågan för laget.
             </p>
           </div>
-        </div>
+          {membersSection}
+          {collectionsSection}
+        </>
+      ) : (
+        <>
+          {canManage && hasMembers && !hasCollections && <OnboardingSteps current={3} />}
+          {collectionsSection}
+          {membersSection}
+        </>
       )}
-      {canManage && hasMembers && !hasCollections && (
-        <OnboardingSteps current={3} />
-      )}
-
-      {/* Insamlingar — this team's collections only */}
-      <section>
-        <SectionLabel className="mb-3">Insamlingar</SectionLabel>
-
-        {collections.length === 0 ? (
-          <div className="border border-surface-border border-dashed rounded-lg bg-surface-alt/40 p-12 flex flex-col items-center text-center gap-4">
-            <div className="w-12 h-12 rounded-full bg-accent-light flex items-center justify-center">
-              <svg className="w-6 h-6 text-accent" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-text-primary">Inga insamlingar för det här laget ännu</p>
-              <p className="text-sm text-text-muted mt-1 max-w-xs">
-                Skapa en förfrågan och dela länken — medlemmarna betalar utanför Lagkassan.
-              </p>
-            </div>
-            <Link href={`/collections/new?team=${team.id}`} className={buttonClass("primary")}>
-              Skapa första förfrågan →
-            </Link>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-6">
-            {activeCollections.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <p className="text-xs text-text-muted">Aktiva ({activeCollections.length})</p>
-                {activeCollections.map((c) => (
-                  <CollectionCard key={c.id} collection={c} />
-                ))}
-              </div>
-            )}
-            {closedCollections.length > 0 && (
-              <div className="flex flex-col gap-3">
-                <p className="text-xs text-text-muted">Avslutade ({closedCollections.length})</p>
-                {closedCollections.map((c) => (
-                  <CollectionCard key={c.id} collection={c} />
-                ))}
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* Medlemmar */}
-      <div id="medlemmar" className="flex flex-col gap-3 scroll-mt-6">
-        <SectionLabel>Medlemmar</SectionLabel>
-        <RosterManager
-          teamId={team.id}
-          members={roster ?? []}
-          canManage={canManage}
-        />
-      </div>
     </div>
   );
 }
