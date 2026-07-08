@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { formatOre, formatSwedishDateTime } from "@/lib/utils";
+import { formatOre, formatSwedishDateTime, toFilename } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -30,10 +30,6 @@ const STATUS_LABELS: Record<string, string> = {
   reported_paid: "Rapporterat betalt",
   confirmed_paid: "Bekräftat av kassör",
 };
-
-function toFilename(title: string): string {
-  return title.trim().replace(/[^a-zA-Z0-9åäöÅÄÖ _-]/g, "").replace(/\s+/g, "-") || "forfragan";
-}
 
 export function MemberList({
   members,

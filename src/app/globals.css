@@ -61,6 +61,16 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Native <button> defaults to cursor: default in every browser — unlike
+   <a>, it never gets a pointer cursor unless told to. Without this, every
+   button in the app looks unclickable on hover. */
+button:not(:disabled) {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+}
+
 /* ─── Typography helpers ─────────────────────────────────────────────────── */
 /* Amounts always in mono — use class="font-mono" on SEK figures */
 

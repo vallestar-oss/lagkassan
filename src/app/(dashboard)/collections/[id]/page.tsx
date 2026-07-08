@@ -136,7 +136,13 @@ export default async function CollectionDetailPage({
       />
 
       {/* Share section — visible to every team member */}
-      <ShareSection shareUrl={shareUrl} qrDataUrl={qrDataUrl} />
+      <ShareSection
+        shareUrl={shareUrl}
+        qrDataUrl={qrDataUrl}
+        collectionTitle={collection.title}
+        teamName={teamName}
+        amountLabel={formatOre(collection.amount)}
+      />
 
       {/* Status summary */}
       {hasRoster && (

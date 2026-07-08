@@ -30,6 +30,10 @@ export function formatSwedishDateTime(isoString: string): string {
   });
 }
 
+export function toFilename(title: string): string {
+  return title.trim().replace(/[^a-zA-Z0-9åäöÅÄÖ _-]/g, "").replace(/\s+/g, "-") || "lagkassan";
+}
+
 export function getInitials(name: string): string {
   return name
     .split(" ")

@@ -3,13 +3,20 @@
 import { useState } from "react";
 import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+import { DownloadQrPoster } from "@/components/DownloadQrPoster";
 
 export function ShareSection({
   shareUrl,
   qrDataUrl,
+  collectionTitle,
+  teamName,
+  amountLabel,
 }: {
   shareUrl: string;
   qrDataUrl: string;
+  collectionTitle: string;
+  teamName: string;
+  amountLabel: string;
 }) {
   const [linkCopied, setLinkCopied] = useState(false);
   const [linkFailed, setLinkFailed] = useState(false);
@@ -71,13 +78,13 @@ export function ShareSection({
             height={88}
             className="border border-surface-border rounded-md opacity-90"
           />
-          <a
-            href={qrDataUrl}
-            download="lagkassan-qr-kod.png"
-            className="text-[11px] text-accent hover:underline text-center max-w-[88px]"
-          >
-            Ladda ner
-          </a>
+          <DownloadQrPoster
+            qrDataUrl={qrDataUrl}
+            collectionTitle={collectionTitle}
+            teamName={teamName}
+            amountLabel={amountLabel}
+            shareUrl={shareUrl}
+          />
         </div>
       </div>
     </Card>
