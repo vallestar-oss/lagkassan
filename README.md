@@ -33,9 +33,9 @@ decision — see [Design decisions](#design-decisions) below.
 
 | Landing page | Treasurer dashboard | Public payment link |
 |---|---|---|
-| _add screenshot_ | _add screenshot_ | _add screenshot_ |
+| ![Landing page](docs/screenshots/landing.png) | ![Treasurer dashboard](docs/screenshots/dashboard.png) | ![Public payment link](docs/screenshots/public-payment.png) |
 
-> Screenshots to be added — see the [live demo](https://lagkassan.vercel.app) in the meantime.
+See also: [collection detail view](docs/screenshots/collection.png) — the share link, QR code, and payment-status breakdown for a single request.
 
 ## Tech stack
 
