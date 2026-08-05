@@ -11,11 +11,10 @@ applied one.
 
 ## Test account
 
-Use this account for all browser/preview testing. Never ask the user for their personal credentials.
-
-- **Email**: test@lagkassan.dev
-- **Password**: TestLagk2026!
-- **Role**: owner of "IFK Testklubben" (created 2026-06-15)
+Credentials for the seeded test account (owner of "IFK Testklubben") live in
+`.claude/test-account.local.md`, which is gitignored — never committed, never
+put back in this file. Read that file for the real values. Never ask the user
+for their personal credentials.
 
 ## Payments
 

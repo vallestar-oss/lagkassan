@@ -36,6 +36,9 @@ yarn-error.log*
 .env*.local
 # .env.local.example is safe to commit — it has only placeholder values
 
+# local-only notes that may contain credentials
+.claude/*.local.md
+
 # supabase CLI cache
 /supabase/.temp/
 
@@ -45,5 +48,3 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
-
-.vercel

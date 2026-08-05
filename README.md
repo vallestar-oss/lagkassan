@@ -1,35 +1,58 @@
 # Lagkassan
 
-A payment collection tool for Swedish teams, clubs and associations.
+**A payment-collection coordination tool for Swedish sports clubs and community associations.**
+
+🔗 **Live demo:** [lagkassan.vercel.app](https://lagkassan.vercel.app)
 
 ---
 
-## Problem
+## The problem
 
-Collecting payments in sports clubs and community associations is painful. Organizers chase members via WhatsApp, manually track who has paid in a spreadsheet, and send reminders one by one. There is no shared link, no live status, and no single source of truth.
+Treasurers in sports clubs and associations chase members for fees over WhatsApp,
+track who's paid in a spreadsheet, and send reminders one by one. There's no
+shared link, no live status, and no single source of truth — just hours of
+manual bookkeeping every season.
 
-## Solution
+## The solution
 
-Lagkassan lets an organizer create a payment request in seconds, share one public link, and see an updated overview of which members have marked their payment. Members open the link, select their name from a roster, and complete a simulated payment flow — no account required on their end.
+Lagkassan lets a treasurer create a payment request in seconds, share **one
+public link**, and watch a live paid/unpaid overview fill in as members report
+their payment. Members open the link, pick their name from a roster the
+treasurer controls, and mark themselves paid — no account, no app, no
+friction.
 
-## Core Features
+Lagkassan **never touches money**. The treasurer supplies their own payment
+instructions (Swish, bank transfer, whatever the club already uses); members
+pay externally and simply report it in Lagkassan. This is a deliberate scope
+decision — see [Design decisions](#design-decisions) below.
 
-- **Payment collections** — an organizer creates a collection with a title, amount and member roster
-- **Public payment link** — one shareable URL per collection; anyone with the link can access the simulated payment page
-- **Roster-based selection** — members pick their own name; the server controls which names are available
-- **Status dashboard** — organizer sees paid / unpaid per member with an updated overview on each page load
-- **Team management** — organizers manage multiple teams and their rosters
-- **Auth-gated dashboard** — only authenticated organizers can create collections or view results
+## Screenshots
 
-## Tech Stack
+| Landing page | Treasurer dashboard | Public payment link |
+|---|---|---|
+| _add screenshot_ | _add screenshot_ | _add screenshot_ |
+
+> Screenshots to be added — see the [live demo](https://lagkassan.vercel.app) in the meantime.
+
+## Tech stack
 
 | Layer | Technology |
 |---|---|
-| Framework | Next.js 16 (App Router, Server Actions) |
+| Framework | Next.js 16 (App Router, Server Actions, Turbopack) |
 | UI | React, Tailwind CSS |
 | Database & Auth | Supabase (PostgreSQL + Row-Level Security) |
 | Language | TypeScript |
 | Deployment | Vercel |
+
+## Core features
+
+- **Payment collections** — a treasurer creates a request with a title, amount, and deadline
+- **One public link per collection** — shareable in a group chat, no per-member invites
+- **Roster-based self-service** — members pick their own name from a list the treasurer controls; the server validates it belongs to the collection
+- **Live status dashboard** — paid / unpaid per member, updated on each page load, no manual refresh needed
+- **Multi-team support** — a treasurer can manage several clubs/teams, each with its own roster and collections
+- **CSV export** — for treasurers who still need a spreadsheet for the annual meeting
+- **Auth-gated dashboard, public payment page** — two very different trust boundaries, enforced by RLS + server-side role checks, not just UI
 
 ## Architecture
 
@@ -37,83 +60,130 @@ Lagkassan lets an organizer create a payment request in seconds, share one publi
 Browser
   │
   ├── /dashboard, /teams, /collections  → auth-gated, server-rendered
-  │     └── Server Actions mutate DB directly (no REST layer)
+  │     └── Server Actions mutate the DB directly (no REST layer)
   │
-  └── /p/[slug]  → public payment page
+  └── /p/[slug]  → public payment page, no auth
         └── Server Action: submitMockPayment
-              • reads collection amount from DB (client never sets it)
-              • validates member belongs to this collection
-              • writes payment record with status = 'paid'
+              • reads the collection amount from the DB — the client never sets it
+              • validates the selected member belongs to this collection
+              • writes a payment record
 ```
 
 **Key design decisions:**
 
-- **Amount is server-authoritative.** The client submits only a member ID; the server looks up the collection amount. The payment amount is not accepted from the client — the server reads it from the collection record in the database.
-- **Server Actions over API routes** for mutations — keeps auth context close to the database call.
-- **Row-Level Security on all tables** — dashboard data is scoped to the authenticated organizer; public payment page has its own narrow policy.
-- **Slug-based public URLs** — collections are identified by a random slug, not a sequential ID, to avoid enumeration.
+- **Amount is server-authoritative.** The client submits only a member ID; the
+  server looks up the amount from the collection record. There is no
+  client-controlled amount field anywhere in the payment path.
+- **Server Actions over API routes** for mutations, to keep the auth context
+  close to the database call and avoid a parallel REST surface to secure.
+- **Row-Level Security on every table**, plus an explicit
+  [defense-in-depth check](src/lib/auth.ts) in server actions — RLS alone
+  isn't trusted for the paths where the public payment policy is intentionally
+  permissive.
+- **Slug-based public URLs**, not sequential IDs, so collections can't be
+  enumerated by guessing.
 
-## Security Considerations
+## Design decisions
 
-The current mock architecture was designed with a future real-money version in mind:
+**Why "mock" payments?** Lagkassan is a coordination layer, not a payment
+processor. It never collects card details or moves money — the treasurer
+posts their own Swish/bank details, members pay directly, and Lagkassan just
+tracks who has reported paying. This was a deliberate MVP scope cut, not a
+missing feature: it sidesteps PCI/PSD2 compliance entirely while still solving
+the actual pain point (chasing people, not processing payments). A real Stripe
+integration is scoped and documented in [docs/stripe-plan.md](docs/stripe-plan.md)
+for if/when it's worth the added complexity.
 
-- The client never controls payment amount, member list, or collection status.
-- All mutations go through authenticated Server Actions or narrow public policies.
-- The public payment endpoint validates that the selected member belongs to the correct collection before writing.
-- RLS policies are the primary access-control layer; application-level checks are a secondary guard.
+**Database schema** lives entirely in [`supabase/migrations/`](supabase/migrations),
+applied in filename order — no drifting schema snapshot to keep in sync.
 
-**Known gaps before real money could be involved:**
+## What I learned building this
 
-- The `payments` table currently allows public insert with `status = 'paid'`. In a real Stripe integration this policy must be restricted to `status = 'pending'` only, with paid status set exclusively by a verified Stripe webhook.
-- Public payment links are convenient but require rate limiting, idempotency keys, and fraud controls before production use.
-- No email confirmation or receipt flow exists yet.
+- **RLS is a strong default, but not a substitute for application-level
+  checks.** The public payment link needs an intentionally permissive insert
+  policy (anyone with the link can report a payment) — which means every
+  authenticated write path needed its own role check in code
+  ([`assertTeamRole`](src/lib/auth.ts)), because relying on RLS alone would
+  have let a treasurer of Team A read or edit Team B's data.
+- **"Server-authoritative" isn't just a slogan — it changes what you build.**
+  Once I decided the client can never set a payment amount or status, entire
+  classes of validation logic disappeared. The hard part was auditing every
+  form to make sure no hidden field ever carried that data — I found and
+  removed a leftover `amount` input during a security pass.
+- **Fail-open vs. fail-closed is a real decision, not a default.** The
+  middleware intentionally passes requests through if Supabase env vars are
+  missing, so the app doesn't hard-crash on a misconfigured preview deploy —
+  but that only works because every protected mutation is *also* guarded at
+  the server-action level. Relying on middleware alone would have been a
+  silent security hole.
+- **Ship the smallest thing that's still honest with users.** The FAQ and
+  landing page say outright that Lagkassan doesn't handle money, instead of
+  hiding "mock payments" behind vague copy — trust matters more for a
+  treasurer-facing tool than feature completeness.
 
-## Mock Payment Notice
+## Local setup
 
-> **Payments are simulated.** No real money is collected. The payment flow writes a `status = 'paid'` record directly to the database to demonstrate the UX. This is intentional for portfolio/demo purposes and is clearly documented in the codebase. Real Stripe integration is planned (see roadmap).
-
-## AI-Assisted Development
-
-This project was built with AI-assisted development (Claude). Responsibilities were split deliberately:
-
-- **AI-generated:** boilerplate, UI layout, Tailwind styling, repetitive CRUD logic
-- **Manually reviewed:** security model, RLS policies, payment flow, schema design, all product decisions
-
-The goal was to move fast without outsourcing judgment on the parts that matter.
-
-## Local Setup
-
-**Prerequisites:** Node.js 18+, a Supabase project, `.env.local` with the keys below.
+**Prerequisites:** Node.js 18+, a Supabase project.
 
 ```bash
-git clone <repo>
+git clone https://github.com/vallestar-oss/lagkassan.git
 cd lagkassan
 npm install
 ```
 
-`.env.local`:
+Copy `.env.local.example` to `.env.local` and fill in your Supabase project's
+keys (Settings → API):
+
 ```
 NEXT_PUBLIC_SUPABASE_URL=...
 NEXT_PUBLIC_SUPABASE_ANON_KEY=...
+SUPABASE_SERVICE_ROLE_KEY=...
 ```
 
-Apply migrations:
+Apply the database schema:
+
 ```bash
 npx supabase db push   # or apply supabase/migrations/*.sql in order
 ```
 
-Run dev server:
+Run the dev server:
+
 ```bash
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000). Create a local test account through the signup flow.
+Open [http://localhost:3000](http://localhost:3000) and create an account
+through the signup flow.
 
-## Future Roadmap
+## Security considerations
 
-- [ ] **Real Stripe integration** — webhook-verified paid status, no client trust
-- [ ] **Email receipts** — confirmation to payer after successful payment
-- [ ] **Partial payments / instalments** — pay in multiple rounds
-- [ ] **Reminder automation** — scheduled nudges to unpaid members
-- [ ] **Multi-currency support** — currently SEK only
-- [ ] **Exportable reports** — CSV download of payment status per collection
+- The client never controls payment amount, member list, or collection status.
+- All mutations go through authenticated Server Actions or narrow, explicit RLS policies.
+- The public payment endpoint validates that the selected member belongs to the correct collection before writing.
+- Rate limiting on public write/auth endpoints (in-memory, documented as pilot-scale — see [`src/lib/rateLimit.ts`](src/lib/rateLimit.ts)).
+
+**Known gap, by design:** the `payments` table currently allows public insert
+with any status. In a real-money version this would be restricted to
+`status = 'pending'`, with `paid` set exclusively by a verified Stripe
+webhook — see [docs/stripe-plan.md](docs/stripe-plan.md) for the full target
+architecture.
+
+## Roadmap
+
+- [ ] Real Stripe integration — webhook-verified paid status, no client trust
+- [ ] Email receipts
+- [ ] Partial payments / instalments
+- [ ] Reminder automation
+- [ ] Multi-currency support (currently SEK only)
+
+## AI-assisted development
+
+Built with AI-assisted development (Claude). Boilerplate, UI layout, and
+repetitive CRUD logic were AI-generated; the security model, RLS policies,
+payment flow, schema design, and all product decisions were manually
+reviewed and directed.
+
+## License
+
+Not currently licensed for reuse — feel free to read the code, but ask before
+forking it into your own project.
