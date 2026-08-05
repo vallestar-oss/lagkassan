@@ -2,6 +2,9 @@
 
 **A payment-collection coordination tool for Swedish sports clubs and community associations.**
 
+[![CI](https://github.com/vallestar-oss/lagkassan/actions/workflows/ci.yml/badge.svg)](https://github.com/vallestar-oss/lagkassan/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+
 🔗 **Live demo:** [lagkassan.vercel.app](https://lagkassan.vercel.app)
 
 ---
@@ -185,5 +188,4 @@ reviewed and directed.
 
 ## License
 
-Not currently licensed for reuse — feel free to read the code, but ask before
-forking it into your own project.
+[MIT](LICENSE)
