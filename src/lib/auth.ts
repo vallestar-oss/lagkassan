@@ -11,8 +11,9 @@ const UNAUTHORIZED = "Du har inte behörighet för den här åtgärden.";
 
 /**
  * Defense-in-depth role check for server actions. RLS is the last line of
- * defense, but several write paths (notably the public payments insert policy)
- * are intentionally permissive, so server actions must NOT rely on RLS alone.
+ * defense, but the public payment write path (src/app/p/[slug]/actions.ts)
+ * runs through a service-role client that bypasses RLS entirely, so its own
+ * validation is the only gate there — server actions must NOT rely on RLS alone.
  *
  * Verifies the current user is a member of `teamId` with one of `roles`.
  * Returns the resolved `user` (handy for created_by etc.) and a Swedish error

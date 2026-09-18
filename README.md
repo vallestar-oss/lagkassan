@@ -165,11 +165,12 @@ through the signup flow.
 - The public payment endpoint validates that the selected member belongs to the correct collection before writing.
 - Rate limiting on public write/auth endpoints (in-memory, documented as pilot-scale — see [`src/lib/rateLimit.ts`](src/lib/rateLimit.ts)).
 
-**Known gap, by design:** the `payments` table currently allows public insert
-with any status. In a real-money version this would be restricted to
-`status = 'pending'`, with `paid` set exclusively by a verified Stripe
-webhook — see [docs/stripe-plan.md](docs/stripe-plan.md) for the full target
-architecture.
+**Known gap, by design:** the public payment action self-reports
+`status = 'paid'` with no external verification that money actually moved
+(there's nothing to verify yet — no processor is wired up). In a real-money
+version this becomes `status = 'pending'` on insert, with `paid` set
+exclusively by a verified Stripe webhook — see
+[docs/stripe-plan.md](docs/stripe-plan.md) for the full target architecture.
 
 ## Roadmap
 

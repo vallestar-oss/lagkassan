@@ -10,33 +10,31 @@ export type PaymentState = { error: string | null; success: boolean };
 // ⚠️  MOCK-ONLY PAYMENT ACTION — DO NOT SHIP TO REAL MONEY AS-IS  ⚠️
 // -----------------------------------------------------------------------------
 // This action fakes a successful payment by inserting a payments row with
-// status:'paid' directly from the anon (public link) context. There is NO real
-// charge and NO verification that money moved. It exists so the app flow is
-// testable before Stripe is wired up.
+// status:'paid'. There is NO real charge and NO verification that money
+// moved. It exists so the app flow is testable before Stripe is wired up.
 //
-// SECURITY MODEL TODAY (intentionally weak, mock-only):
-//   • The `payments: public insert` RLS policy lets anyone with the link insert
-//     a row for any active collection. Combined with this action writing
-//     status:'paid', that means anyone could mark anyone as paid. Acceptable
-//     ONLY because no real money is involved yet.
-//   • `amount` is now read from the DB (collections.amount), never the form, so
-//     a tampered client cannot set an arbitrary amount. (See below.)
+// SECURITY MODEL TODAY: the anon role has zero direct table privileges (see
+// migration 20260707000000_lock_down_anon_access) — there is no public RLS
+// insert policy to abuse. This service-role action is the sole gatekeeper for
+// the write, and it validates the collection is active, the member belongs to
+// THIS collection, and the member is still unpaid before writing. `amount` is
+// read from the DB (collections.amount), never the form, so a tampered client
+// cannot set an arbitrary amount. The remaining gap is purely that this action
+// itself writes status:'paid' on a self-report with no external verification
+// — acceptable only because no real money is involved yet.
 //
 // WHAT MUST CHANGE WHEN STRIPE IS ADDED — non-negotiable:
 //   (a) status:'paid' must ONLY ever be set by a verified Stripe webhook
 //       (signature-checked, service-role). NEVER by this action, and NEVER by
-//       any client/anon code path. The anon path must lose the ability to write
-//       'paid' entirely.
+//       any client/anon code path.
 //   (b) This action's job becomes: insert a status:'pending' payment row and
 //       create a Stripe Checkout Session for collections.amount, then return the
 //       session URL for redirect. The webhook (checkout.session.completed /
 //       payment_intent.succeeded) is what flips the row to 'paid', which in turn
 //       fires sync_collection_member_paid to mark the collection_member paid.
-//   (c) The `payments: public insert` RLS policy must be restricted so the anon
-//       role can only insert status='pending' (and never update). See the
-//       Stripe webhook plan for the full target design.
+//       See the Stripe webhook plan for the full target design.
 //
-// Until (a)–(c) land, treat every "paid" here as fictional.
+// Until (a)-(b) land, treat every "paid" here as fictional.
 // =============================================================================
 
 export async function submitMockPayment(
