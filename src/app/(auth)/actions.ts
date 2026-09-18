@@ -72,14 +72,20 @@ export async function signIn(
 
 export type GuestState = { error: string | null };
 
-// Shared core for the guest flow — a real, brand-new Supabase anonymous auth
-// user (no email/password), starting with zero teams so it goes through the
-// normal onboarding just like any new signup. Two entry points below wrap
-// this for their different calling conventions.
-async function guestSignIn(fullName: string): Promise<GuestState> {
+// Lets visitors (e.g. recruiters browsing the portfolio) try the app with
+// just a name — a real, brand-new Supabase anonymous auth user (no
+// email/password), starting with zero teams so it goes through the normal
+// onboarding just like any new signup. Used on both the landing page hero
+// and the login page's guest form.
+export async function signInAsGuest(
+  _prev: GuestState,
+  formData: FormData,
+): Promise<GuestState> {
   const ip = await getClientIp();
   const { ok } = rateLimit(`guest-signin:${ip}`, 20, 60 * 60_000);
   if (!ok) return { error: "För många försök. Försök igen om en stund." };
+
+  const fullName = (formData.get("guest_name") as string | null)?.trim() || "Gäst";
 
   const supabase = await createClient();
   const { error } = await supabase.auth.signInAnonymously({
@@ -89,21 +95,6 @@ async function guestSignIn(fullName: string): Promise<GuestState> {
   if (error) return { error: "Kunde inte starta testkontot. Försök igen." };
 
   redirect("/dashboard");
-}
-
-// Used with useActionState on the login page's named-guest form.
-export async function signInAsGuest(
-  _prev: GuestState,
-  formData: FormData,
-): Promise<GuestState> {
-  const fullName = (formData.get("guest_name") as string | null)?.trim() || "Gäst";
-  return guestSignIn(fullName);
-}
-
-// Used as a plain one-click form action (e.g. the landing page hero) — no
-// name field, no pending/error UI, just "Gäst" and straight to /dashboard.
-export async function signInAsGuestQuick(): Promise<void> {
-  await guestSignIn("Gäst");
 }
 
 export async function signOut(): Promise<never> {
