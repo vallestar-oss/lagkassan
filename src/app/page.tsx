@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { MobileMenu } from "./MobileMenu";
+import { signInAsGuestQuick } from "./(auth)/actions";
 
 // ─── Icons (inline SVG, Heroicons outline style) ────────────────────────────
 function IconLink({ className }: { className?: string }) {
@@ -136,19 +137,27 @@ export default function LandingPage() {
               Inga konton för medlemmarna — inga pengar via Lagkassan.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <form action={signInAsGuestQuick}>
+                <button
+                  type="submit"
+                  className="w-full sm:w-auto bg-accent text-white font-semibold px-6 py-3 rounded-md hover:bg-accent-hover transition-colors shadow-sm"
+                >
+                  Testa utan att skapa konto
+                </button>
+              </form>
               <Link
                 href="/signup"
-                className="bg-accent text-white font-semibold px-6 py-3 rounded-md hover:bg-accent-hover transition-colors shadow-sm"
+                className="text-text-primary border border-surface-border bg-white font-medium px-6 py-3 rounded-md hover:border-text-muted transition-colors"
               >
                 Skapa konto
               </Link>
-              <a
-                href="#hur-det-fungerar"
-                className="text-text-muted border border-surface-border bg-white font-medium px-6 py-3 rounded-md hover:border-text-muted transition-colors"
-              >
-                Se hur det fungerar
-              </a>
             </div>
+            <a
+              href="#hur-det-fungerar"
+              className="inline-block mt-4 text-sm text-text-muted hover:text-text-primary underline underline-offset-2 transition-colors"
+            >
+              Se hur det fungerar
+            </a>
 
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 mt-8 text-sm text-text-muted">
               <span className="flex items-center gap-1.5">
