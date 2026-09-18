@@ -155,6 +155,14 @@ Run the dev server:
 npm run dev
 ```
 
+Run the test suite (unit tests for the role-check and rate-limit logic — see
+[`src/lib/auth.test.ts`](src/lib/auth.test.ts) and
+[`src/lib/rateLimit.test.ts`](src/lib/rateLimit.test.ts)):
+
+```bash
+npm run test
+```
+
 Open [http://localhost:3000](http://localhost:3000) and create an account
 through the signup flow.
 
