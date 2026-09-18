@@ -70,6 +70,32 @@ export async function signIn(
   redirect(redirectTo.startsWith("/") ? redirectTo : "/dashboard");
 }
 
+export type GuestState = { error: string | null };
+
+// Lets visitors (e.g. recruiters browsing the portfolio) try the app
+// instantly without creating an account — a real, brand-new Supabase
+// anonymous auth user (no email/password), starting with zero teams so it
+// goes through the normal onboarding just like any new signup.
+export async function signInAsGuest(
+  _prev: GuestState,
+  formData: FormData,
+): Promise<GuestState> {
+  const ip = await getClientIp();
+  const { ok } = rateLimit(`guest-signin:${ip}`, 20, 60 * 60_000);
+  if (!ok) return { error: "För många försök. Försök igen om en stund." };
+
+  const fullName = (formData.get("guest_name") as string | null)?.trim() || "Gäst";
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInAnonymously({
+    options: { data: { full_name: fullName } },
+  });
+
+  if (error) return { error: "Kunde inte starta testkontot. Försök igen." };
+
+  redirect("/dashboard");
+}
+
 export async function signOut(): Promise<never> {
   const supabase = await createClient();
   await supabase.auth.signOut();
