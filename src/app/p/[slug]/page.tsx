@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
@@ -5,6 +6,11 @@ import { PaymentForm } from "./PaymentForm";
 import { RosterPaymentFlow } from "./RosterPaymentFlow";
 import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
+
+// Payment links are shared privately — keep them out of search results.
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function PublicPaymentPage({
   params,
