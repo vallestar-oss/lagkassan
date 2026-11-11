@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { ExportCsvButton } from "@/components/ExportCsvButton";
-import { inputClass, cardClass, cn } from "@/lib/ui";
+import { inputClass, cardClass, cn, type BadgeVariant } from "@/lib/ui";
 
 type Member = {
   id: string;
@@ -25,10 +25,21 @@ const FILTERS: { key: FilterKey; label: string }[] = [
   { key: "confirmed_paid",label: "Bekräftat betalt" },
 ];
 
-const STATUS_LABELS: Record<string, string> = {
-  unpaid: "Ej betald",
-  reported_paid: "Rapporterat betalt",
-  confirmed_paid: "Bekräftat av kassör",
+const STATUS: Record<string, { label: string; variant: BadgeVariant }> = {
+  unpaid: { label: "Ej betald", variant: "neutral" },
+  reported_paid: { label: "Rapporterat betalt", variant: "warning" },
+  confirmed_paid: { label: "Bekräftat av kassör", variant: "success" },
+};
+
+type ActionResult = Promise<{ error: string | null }>;
+
+type RowAction = {
+  key: string;
+  label: string;
+  variant: "success" | "destructive";
+  run: () => ActionResult;
+  confirmText?: string;
+  ariaLabel?: string;
 };
 
 export function MemberList({
@@ -49,10 +60,10 @@ export function MemberList({
   collectionAmount: number;
   collectionStatus: string;
   canEdit: boolean;
-  confirmAction: (memberId: string, collectionId: string) => Promise<{ error: string | null }>;
-  revertAction:  (memberId: string, collectionId: string) => Promise<{ error: string | null }>;
-  markPaidAction: (memberId: string, memberName: string, collectionId: string) => Promise<{ error: string | null }>;
-  removeAction:  (memberId: string, collectionId: string) => Promise<{ error: string | null }>;
+  confirmAction: (memberId: string, collectionId: string) => ActionResult;
+  revertAction: (memberId: string, collectionId: string) => ActionResult;
+  markPaidAction: (memberId: string, memberName: string, collectionId: string) => ActionResult;
+  removeAction: (memberId: string, collectionId: string) => ActionResult;
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
@@ -75,21 +86,63 @@ export function MemberList({
     ? byStatus.filter((m) => m.name.toLowerCase().includes(query))
     : byStatus;
 
-  async function runAction(key: string, fn: () => Promise<{ error: string | null }>) {
+  async function runAction({ key, run, confirmText }: RowAction) {
+    if (confirmText && !window.confirm(confirmText)) return;
     setPendingKey(key);
     setRowError(null);
-    const res = await fn();
+    const res = await run();
     setPendingKey(null);
     if (res.error) setRowError({ key, message: res.error });
   }
 
-  function confirmRevert(member: Member): boolean {
+  // The buttons a treasurer gets for a member, by payment status.
+  function actionsFor(member: Member): RowAction[] {
+    if (!canEdit) return [];
+
+    const revert: RowAction = {
+      key: `${member.id}:revert`,
+      label: "Ångra",
+      variant: "destructive",
+      run: () => revertAction(member.id, collectionId),
+      confirmText:
+        member.status === "reported_paid"
+          ? `Återställ ${member.name} till obetald? Den rapporterade betalningen tas bort och personen kan rapportera på nytt.`
+          : `Ångra bekräftelsen för ${member.name}? Personen visas som rapporterat betalt igen.`,
+    };
+
+    if (member.status === "confirmed_paid") return [revert];
+
     if (member.status === "reported_paid") {
-      return window.confirm(
-        `Återställ ${member.name} till obetald? Den rapporterade betalningen tas bort och personen kan rapportera på nytt.`,
-      );
+      return [
+        {
+          key: `${member.id}:confirm`,
+          label: "Bekräfta",
+          variant: "success",
+          run: () => confirmAction(member.id, collectionId),
+        },
+        revert,
+      ];
     }
-    return window.confirm(`Ångra bekräftelsen för ${member.name}? Personen visas som rapporterat betalt igen.`);
+
+    const actions: RowAction[] = [
+      {
+        key: `${member.id}:markPaid`,
+        label: "Markera betald",
+        variant: "success",
+        run: () => markPaidAction(member.id, member.name, collectionId),
+      },
+    ];
+    if (collectionStatus === "active") {
+      actions.push({
+        key: `${member.id}:remove`,
+        label: "Ta bort",
+        variant: "destructive",
+        run: () => removeAction(member.id, collectionId),
+        confirmText: `Ta bort ${member.name} från förfrågan?`,
+        ariaLabel: `Ta bort ${member.name}`,
+      });
+    }
+    return actions;
   }
 
   return (
@@ -135,7 +188,7 @@ export function MemberList({
             rows={members.map((m) => [
               m.name,
               collectionAmount / 100,
-              STATUS_LABELS[m.status] ?? m.status,
+              STATUS[m.status]?.label ?? m.status,
               m.reported_at ? formatSwedishDateTime(m.reported_at) : "",
               m.confirmed_at ? formatSwedishDateTime(m.confirmed_at) : "",
             ])}
@@ -153,10 +206,9 @@ export function MemberList({
       ) : (
         <ul className="divide-y divide-surface-border">
           {filtered.map((member) => {
-            const confirmKey = `${member.id}:confirm`;
-            const revertKey = `${member.id}:revert`;
-            const markPaidKey = `${member.id}:markPaid`;
-            const removeKey = `${member.id}:remove`;
+            const status = STATUS[member.status] ?? STATUS.unpaid;
+            const actions = actionsFor(member);
+            const error = rowError?.key.startsWith(`${member.id}:`) ? rowError.message : null;
 
             return (
               <li
@@ -171,117 +223,35 @@ export function MemberList({
                     {formatOre(collectionAmount)}
                   </span>
 
-                  {member.status === "confirmed_paid" ? (
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Badge variant="success">Bekräftat av kassör</Badge>
-                        {canEdit && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="chip"
-                            disabled={pendingKey === revertKey}
-                            onClick={() => {
-                              if (!confirmRevert(member)) return;
-                              runAction(revertKey, () => revertAction(member.id, collectionId));
-                            }}
-                          >
-                            {pendingKey === revertKey ? "…" : "Ångra"}
-                          </Button>
-                        )}
-                      </div>
-                      {member.confirmed_at && (
-                        <p className="text-xs text-text-muted">
-                          Bekräftat: {formatSwedishDateTime(member.confirmed_at)}
-                        </p>
-                      )}
-                      {member.reported_at && (
-                        <p className="text-xs text-text-muted">
-                          Rapporterat: {formatSwedishDateTime(member.reported_at)}
-                        </p>
-                      )}
-                      {rowError?.key === revertKey && (
-                        <p className="text-xs text-danger">{rowError.message}</p>
-                      )}
-                    </div>
-
-                  ) : member.status === "reported_paid" ? (
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Badge variant="warning">Rapporterat betalt</Badge>
-                        {canEdit && (
-                          <>
-                            <Button
-                              type="button"
-                              variant="success"
-                              size="chip"
-                              disabled={pendingKey === confirmKey}
-                              onClick={() => runAction(confirmKey, () => confirmAction(member.id, collectionId))}
-                            >
-                              {pendingKey === confirmKey ? "…" : "Bekräfta"}
-                            </Button>
-                            <Button
-                              type="button"
-                              variant="destructive"
-                              size="chip"
-                              disabled={pendingKey === revertKey}
-                              onClick={() => {
-                                if (!confirmRevert(member)) return;
-                                runAction(revertKey, () => revertAction(member.id, collectionId));
-                              }}
-                            >
-                              {pendingKey === revertKey ? "…" : "Ångra"}
-                            </Button>
-                          </>
-                        )}
-                      </div>
-                      {member.reported_at && (
-                        <p className="text-xs text-text-muted">
-                          Rapporterat: {formatSwedishDateTime(member.reported_at)}
-                        </p>
-                      )}
-                      {(rowError?.key === confirmKey || rowError?.key === revertKey) && (
-                        <p className="text-xs text-danger">{rowError.message}</p>
-                      )}
-                    </div>
-
-                  ) : canEdit ? (
-                    <div className="flex flex-col items-end gap-1">
-                      <div className="flex flex-wrap items-center justify-end gap-2">
-                        <Badge variant="neutral">Ej betald</Badge>
+                  <div className="flex flex-col items-end gap-1">
+                    <div className="flex flex-wrap items-center justify-end gap-2">
+                      <Badge variant={status.variant}>{status.label}</Badge>
+                      {actions.map((a) => (
                         <Button
+                          key={a.key}
                           type="button"
-                          variant="success"
+                          variant={a.variant}
                           size="chip"
-                          disabled={pendingKey === markPaidKey}
-                          onClick={() => runAction(markPaidKey, () => markPaidAction(member.id, member.name, collectionId))}
+                          disabled={pendingKey === a.key}
+                          onClick={() => runAction(a)}
+                          aria-label={a.ariaLabel}
                         >
-                          {pendingKey === markPaidKey ? "…" : "Markera betald"}
+                          {pendingKey === a.key ? "…" : a.label}
                         </Button>
-                        {collectionStatus === "active" && (
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="chip"
-                            disabled={pendingKey === removeKey}
-                            onClick={() => {
-                              if (!window.confirm(`Ta bort ${member.name} från förfrågan?`)) return;
-                              runAction(removeKey, () => removeAction(member.id, collectionId));
-                            }}
-                            aria-label={`Ta bort ${member.name}`}
-                          >
-                            {pendingKey === removeKey ? "…" : "Ta bort"}
-                          </Button>
-                        )}
-                      </div>
-                      {(rowError?.key === markPaidKey || rowError?.key === removeKey) && (
-                        <p className="text-xs text-danger">{rowError.message}</p>
-                      )}
+                      ))}
                     </div>
-
-                  ) : (
-                    <Badge variant="neutral">Ej betald</Badge>
-                  )}
+                    {member.status === "confirmed_paid" && member.confirmed_at && (
+                      <p className="text-xs text-text-muted">
+                        Bekräftat: {formatSwedishDateTime(member.confirmed_at)}
+                      </p>
+                    )}
+                    {member.status !== "unpaid" && member.reported_at && (
+                      <p className="text-xs text-text-muted">
+                        Rapporterat: {formatSwedishDateTime(member.reported_at)}
+                      </p>
+                    )}
+                    {error && <p className="text-xs text-danger">{error}</p>}
+                  </div>
                 </div>
               </li>
             );
