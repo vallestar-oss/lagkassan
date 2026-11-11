@@ -292,11 +292,14 @@ export type Database = {
     };
     Views: { [_ in never]: never };
     Functions: {
+      create_team: {
+        Args: { p_name: string; p_description?: string | null };
+        Returns: string;
+      };
       get_public_collection: {
         Args: { p_slug: string };
         Returns: {
           id: string;
-          team_id: string;
           title: string;
           description: string | null;
           amount: number;

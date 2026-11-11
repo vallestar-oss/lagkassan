@@ -4,23 +4,10 @@ import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { safeRedirectPath } from "@/lib/safeRedirect";
+import { MIN_PASSWORD_LENGTH, translateAuthError } from "@/lib/authErrors";
 
 export type AuthState = { error: string | null };
 
-// Swedish translations for the most common Supabase auth errors.
-function translateError(message: string): string {
-  if (message.includes("Invalid login credentials"))
-    return "Fel e-postadress eller lösenord.";
-  if (message.includes("Email not confirmed"))
-    return "Bekräfta din e-postadress innan du loggar in.";
-  if (message.includes("User already registered"))
-    return "Det finns redan ett konto med den e-postadressen.";
-  if (message.includes("Password should be at least"))
-    return "Lösenordet måste vara minst 8 tecken.";
-  if (message.includes("Unable to validate email"))
-    return "Ogiltig e-postadress.";
-  return message;
-}
 
 export async function signUp(
   _prev: AuthState,
@@ -36,13 +23,18 @@ export async function signUp(
   const email = (formData.get("email") as string | null)?.trim() ?? "";
   const password = (formData.get("password") as string | null) ?? "";
 
+  // The form's minLength is only a browser hint — enforce the app's own rule
+  // here too, since Supabase's default minimum (6) is lower.
+  if (password.length < MIN_PASSWORD_LENGTH)
+    return { error: `Lösenordet måste vara minst ${MIN_PASSWORD_LENGTH} tecken.` };
+
   const { error } = await supabase.auth.signUp({
     email,
     password,
     options: { data: { full_name: fullName } },
   });
 
-  if (error) return { error: translateError(error.message) };
+  if (error) return { error: translateAuthError(error.message) };
 
   redirect("/dashboard");
 }
@@ -64,7 +56,7 @@ export async function signIn(
 
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
-  if (error) return { error: translateError(error.message) };
+  if (error) return { error: translateAuthError(error.message) };
 
   // Honor the redirect param set by middleware.
   redirect(safeRedirectPath(formData.get("redirect") as string | null));

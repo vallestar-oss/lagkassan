@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { MIN_PASSWORD_LENGTH } from "@/lib/authErrors";
 
 export type UpdatePasswordState = { error: string | null; success: boolean };
 
@@ -19,8 +20,8 @@ export async function updatePassword(
   const password = (formData.get("password") as string | null) ?? "";
   const confirmPassword = (formData.get("confirm_password") as string | null) ?? "";
 
-  if (password.length < 8)
-    return { error: "Lösenordet måste vara minst 8 tecken.", success: false };
+  if (password.length < MIN_PASSWORD_LENGTH)
+    return { error: `Lösenordet måste vara minst ${MIN_PASSWORD_LENGTH} tecken.`, success: false };
   if (password !== confirmPassword)
     return { error: "Lösenorden matchar inte.", success: false };
 

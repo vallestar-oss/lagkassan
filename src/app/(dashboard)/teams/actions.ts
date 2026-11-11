@@ -20,7 +20,33 @@ export async function createTeam(
   const description = (formData.get("description") as string | null)?.trim() ?? "";
 
   if (!name) return { error: "Lagets namn är obligatoriskt." };
+  if (name.length > 100) return { error: "Lagets namn får vara högst 100 tecken." };
+  if (description.length > 500) return { error: "Beskrivningen får vara högst 500 tecken." };
 
+  // create_team inserts the team and the caller's owner row in one
+  // transaction (migration 20261111000000_secure_team_creation), so a failure
+  // can never leave an ownerless team behind.
+  const { data: teamId, error } = await supabase.rpc("create_team", {
+    p_name: name,
+    p_description: description || null,
+  });
+
+  // TODO: remove this fallback once the migration has been applied in
+  // production. PGRST202 = function not found (migration not applied yet).
+  if (error?.code === "PGRST202") return createTeamLegacy(supabase, user.id, name, description);
+
+  if (error || !teamId) return { error: "Kunde inte skapa laget. Försök igen." };
+
+  revalidatePath("/dashboard", "layout");
+  redirect(`/teams/${teamId}`);
+}
+
+async function createTeamLegacy(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  userId: string,
+  name: string,
+  description: string,
+): Promise<TeamState> {
   const teamId = crypto.randomUUID();
 
   const { error: teamError } = await supabase
@@ -31,7 +57,7 @@ export async function createTeam(
 
   const { error: memberError } = await supabase
     .from("team_members")
-    .insert({ team_id: teamId, user_id: user.id, role: "owner" });
+    .insert({ team_id: teamId, user_id: userId, role: "owner" });
 
   if (memberError) return { error: "Kunde inte skapa laget. Försök igen." };
 
