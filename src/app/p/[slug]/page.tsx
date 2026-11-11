@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate } from "@/lib/utils";
-import { PaymentForm } from "./PaymentForm";
 import { RosterPaymentFlow } from "./RosterPaymentFlow";
 import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
@@ -39,12 +38,6 @@ export default async function PublicPaymentPage({
 
   const teamName = collection.team_name ?? "";
   const members = memberRows ?? [];
-  const hasRoster = members.length > 0;
-
-  // Only used in the free-form fallback header ("N har redan betalt").
-  const paidCount = hasRoster
-    ? members.filter((m) => m.status !== "unpaid").length
-    : Number(collection.paid_count ?? 0);
 
   return (
     <div className="min-h-screen bg-surface flex flex-col">
@@ -84,11 +77,6 @@ export default async function PublicPaymentPage({
               </div>
             )}
           </div>
-          {!hasRoster && paidCount > 0 && (
-            <p className="text-xs text-text-muted mt-3">
-              {paidCount} {paidCount === 1 ? "person har" : "personer har"} redan betalt.
-            </p>
-          )}
         </Card>
 
         {/* Så fungerar det — explicit steps so members never think Lagkassan takes the payment */}
@@ -130,19 +118,18 @@ export default async function PublicPaymentPage({
           </div>
         )}
 
-        {/* Payment: roster flow (member list) or free-form fallback */}
-        {hasRoster ? (
+        {/* Collections always have participants (enforced when creating and
+            removing members); the empty case only guards older data. */}
+        {members.length > 0 ? (
           <RosterPaymentFlow
             collectionId={collection.id}
             amount={collection.amount}
             members={members}
           />
         ) : (
-          <PaymentForm
-            collectionId={collection.id}
-            amount={collection.amount}
-            hasInstructions={!!collection.payment_instructions}
-          />
+          <p className="text-sm text-text-muted text-center">
+            Det finns inga deltagare i den här förfrågan ännu. Kontakta kassören.
+          </p>
         )}
       </main>
     </div>

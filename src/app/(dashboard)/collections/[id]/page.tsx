@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import { formatOre, formatSwedishDate, formatSwedishDateTime } from "@/lib/utils";
+import { formatOre, formatSwedishDate } from "@/lib/utils";
 import {
   markMemberPaid,
   setCollectionStatus,
@@ -13,7 +13,6 @@ import { AddMembersForm } from "./AddMembersForm";
 import { EditInstructionsForm } from "./EditInstructionsForm";
 import { MemberList } from "./MemberList";
 import { AutoRefresh } from "@/components/AutoRefresh";
-import { ExportCsvButton } from "@/components/ExportCsvButton";
 import { ShareSection } from "./ShareSection";
 import { CloseCollectionButton } from "./CloseCollectionButton";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -50,41 +49,24 @@ export default async function CollectionDetailPage({
 
   if (!membership) notFound();
 
-  // Load roster members — if any exist, they are the source of truth for stats.
   const { data: memberRows } = await supabase
     .from("collection_members")
     .select("id, name, status, reported_at, confirmed_at")
     .eq("collection_id", id)
     .order("name", { ascending: true });
 
-  const rosterMembers = memberRows ?? [];
-  const hasRoster = rosterMembers.length > 0;
+  const members = memberRows ?? [];
 
-  // Only load payments when there's no roster (free-form collections).
-  const paymentList = hasRoster
-    ? []
-    : (
-        await supabase
-          .from("payments")
-          .select("*")
-          .eq("collection_id", id)
-          .order("created_at", { ascending: false })
-      ).data ?? [];
-
-  // "Reported" = anyone who has said they paid, whether or not the treasurer
-  // has confirmed it yet. "Confirmed" = the treasurer has checked it externally.
-  const totalCount     = hasRoster ? rosterMembers.length : paymentList.length;
-  const unpaidCount    = hasRoster ? rosterMembers.filter((m) => m.status === "unpaid").length        : 0;
-  const reportedCount  = hasRoster ? rosterMembers.filter((m) => m.status === "reported_paid").length : paymentList.filter((p) => p.status === "paid").length;
-  const confirmedCount = hasRoster ? rosterMembers.filter((m) => m.status === "confirmed_paid").length : reportedCount;
+  // "Reported" = the member has said they paid; "confirmed" = the treasurer
+  // has checked it externally. Every member owes the same amount.
+  const totalCount     = members.length;
+  const unpaidCount    = members.filter((m) => m.status === "unpaid").length;
+  const reportedCount  = members.filter((m) => m.status === "reported_paid").length;
+  const confirmedCount = members.filter((m) => m.status === "confirmed_paid").length;
 
   const totalAmount     = totalCount * collection.amount;
-  const reportedAmount  = hasRoster
-    ? (reportedCount + confirmedCount) * collection.amount
-    : reportedCount * collection.amount;
-  const confirmedAmount = hasRoster
-    ? confirmedCount * collection.amount
-    : paymentList.filter((p) => p.status === "paid").reduce((sum, p) => sum + p.amount, 0);
+  const reportedAmount  = (reportedCount + confirmedCount) * collection.amount;
+  const confirmedAmount = confirmedCount * collection.amount;
   const remainingAmount = totalAmount - confirmedAmount;
 
   // `||` (not `??`) intentionally — an accidentally empty-string env var must
@@ -140,21 +122,19 @@ export default async function CollectionDetailPage({
       />
 
       {/* Status summary */}
-      {hasRoster && (
-        <div className="flex flex-wrap gap-2">
-          {([
-            { label: "Totalt",      value: totalCount,     variant: "neutral" },
-            { label: "Ej betalda",  value: unpaidCount,    variant: "neutral" },
-            { label: "Rapporterat", value: reportedCount,  variant: unpaidCount === 0 && reportedCount === 0 ? "neutral" : "warning" },
-            { label: "Bekräftat",   value: confirmedCount, variant: confirmedCount === 0 ? "neutral" : "success" },
-          ] as { label: string; value: number; variant: BadgeVariant }[]).map((s) => (
-            <Badge key={s.label} variant={s.variant} className="shadow-sm">
-              <span className="text-text-muted font-normal">{s.label}</span>
-              <span className="font-bold tabular-nums">{s.value}</span>
-            </Badge>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap gap-2">
+        {([
+          { label: "Totalt",      value: totalCount,     variant: "neutral" },
+          { label: "Ej betalda",  value: unpaidCount,    variant: "neutral" },
+          { label: "Rapporterat", value: reportedCount,  variant: unpaidCount === 0 && reportedCount === 0 ? "neutral" : "warning" },
+          { label: "Bekräftat",   value: confirmedCount, variant: confirmedCount === 0 ? "neutral" : "success" },
+        ] as { label: string; value: number; variant: BadgeVariant }[]).map((s) => (
+          <Badge key={s.label} variant={s.variant} className="shadow-sm">
+            <span className="text-text-muted font-normal">{s.label}</span>
+            <span className="font-bold tabular-nums">{s.value}</span>
+          </Badge>
+        ))}
+      </div>
 
       {/* Amount stats */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
@@ -177,83 +157,21 @@ export default async function CollectionDetailPage({
         </div>
       )}
 
-      {/* Member / payment list */}
-      {hasRoster ? (
-        <MemberList
-          members={rosterMembers}
-          collectionId={id}
-          collectionTitle={collection.title}
-          collectionAmount={collection.amount}
-          collectionStatus={collection.status}
-          canEdit={canEdit}
-          confirmAction={confirmMemberPayment}
-          revertAction={revertMemberPayment}
-          markPaidAction={markMemberPaid}
-          removeAction={removeCollectionMember}
-        />
-      ) : (
-        /* Free-form: show individual payment rows */
-        <Card className="overflow-hidden">
-          <div className="px-5 py-4 border-b border-surface-border flex flex-col gap-2 bg-surface-alt/40">
-            <div className="flex items-center justify-between">
-              <SectionLabel>Rapporterade betalningar</SectionLabel>
-              <Badge variant={collection.status === "active" ? "success" : "neutral"}>
-                {collection.status === "active" ? "Aktiv" : "Stängd"}
-              </Badge>
-            </div>
-            {paymentList.length > 0 && (
-              <div className="flex justify-end">
-                <ExportCsvButton
-                  filename={`${collection.slug}-betalningar.csv`}
-                  headers={["Namn", "E-post", "Belopp (kr)", "Status", "Skapad", "Betald"]}
-                  rows={paymentList.map((p) => [
-                    p.payer_name,
-                    p.payer_email ?? "",
-                    p.amount / 100,
-                    p.status === "paid" ? "Betald" : "Väntar",
-                    formatSwedishDateTime(p.created_at),
-                    p.paid_at ? formatSwedishDateTime(p.paid_at) : "",
-                  ])}
-                  label="Exportera till Excel/CSV"
-                />
-              </div>
-            )}
-          </div>
-          {paymentList.length === 0 ? (
-            <div className="px-5 py-10 text-center">
-              <p className="text-sm text-text-muted">
-                Inga betalningar än. Dela länken ovan för att komma igång.
-              </p>
-            </div>
-          ) : (
-            <ul className="divide-y divide-surface-border">
-              {paymentList.map((payment) => (
-                <li key={payment.id} className="flex items-center justify-between px-5 py-3.5 gap-3 hover:bg-surface-alt/40 transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-text-primary truncate">{payment.payer_name}</p>
-                    {payment.payer_email && (
-                      <p className="text-xs text-text-muted truncate">{payment.payer_email}</p>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="font-mono text-sm text-text-muted">{formatOre(payment.amount)}</span>
-                    {/* Every payment row is written as status 'paid' (self-report or
-                        treasurer-recorded) — there is no pending state to act on. */}
-                    <Badge variant="success">Betald</Badge>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      )}
+      <MemberList
+        members={members}
+        collectionId={id}
+        collectionTitle={collection.title}
+        collectionAmount={collection.amount}
+        collectionStatus={collection.status}
+        canEdit={canEdit}
+        confirmAction={confirmMemberPayment}
+        revertAction={revertMemberPayment}
+        markPaidAction={markMemberPaid}
+        removeAction={removeCollectionMember}
+      />
+
       {/* Add participants — only for active collections the user can edit */}
-      {canEdit && collection.status === "active" && (
-        <AddMembersForm
-          collectionId={id}
-          isFreeForm={!hasRoster}
-        />
-      )}
+      {canEdit && collection.status === "active" && <AddMembersForm collectionId={id} />}
 
       {/* Edit payment instructions — owner/treasurer, active collections only */}
       {canEdit && collection.status === "active" && (

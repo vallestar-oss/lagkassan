@@ -64,12 +64,12 @@ export async function submitMockPayment(
   const supabase = createAdminClient();
 
   const collectionId = (formData.get("collection_id") as string | null) ?? "";
-  const payerName = (formData.get("payer_name") as string | null)?.trim() ?? "";
-  const payerEmail = (formData.get("payer_email") as string | null)?.trim() || null;
-  const collectionMemberId = (formData.get("collection_member_id") as string | null) || null;
+  const collectionMemberId = (formData.get("collection_member_id") as string | null) ?? "";
 
-  if (!payerName) return { error: "Ange ditt namn.", success: false };
   if (!collectionId) return { error: "Ogiltig förfrågan.", success: false };
+  // Every collection has a participant list, so a report is always for one
+  // named member.
+  if (!collectionMemberId) return { error: "Välj ditt namn i listan.", success: false };
 
   // Amount is the source of truth from the DB — NEVER from the form. The client
   // cannot influence what gets charged/recorded; a tampered hidden field is
@@ -89,20 +89,19 @@ export async function submitMockPayment(
   // Verify the member actually belongs to THIS collection — without this
   // check, a tampered client could pair a collection_member_id from a
   // completely different collection with this collectionId, and the sync
-  // trigger would flip that unrelated member's status.
-  if (collectionMemberId) {
-    const { data: member } = await supabase
-      .from("collection_members")
-      .select("status")
-      .eq("id", collectionMemberId)
-      .eq("collection_id", collectionId)
-      .single();
-    if (!member) return { error: "Ogiltig deltagare för den här förfrågan.", success: false };
-    // Fast-path double-payment guard — the real guard against the race is the
-    // partial unique index idx_one_paid_per_member (handled on insert below).
-    if (member.status !== "unpaid")
-      return { error: "Den här personen har redan betalat.", success: false };
-  }
+  // trigger would flip that unrelated member's status. The payer name comes
+  // from the member row, not the form.
+  const { data: member } = await supabase
+    .from("collection_members")
+    .select("name, status")
+    .eq("id", collectionMemberId)
+    .eq("collection_id", collectionId)
+    .single();
+  if (!member) return { error: "Ogiltig deltagare för den här förfrågan.", success: false };
+  // Fast-path double-payment guard — the real guard against the race is the
+  // partial unique index idx_one_paid_per_member (handled on insert below).
+  if (member.status !== "unpaid")
+    return { error: "Den här personen har redan betalat.", success: false };
 
   // MOCK: write a payment row directly as "paid" (no Stripe yet).
   // ⚠️ When Stripe lands, this insert becomes status:'pending' + a Checkout
@@ -113,8 +112,7 @@ export async function submitMockPayment(
   const { error } = await supabase.from("payments").insert({
     collection_id: collectionId,
     collection_member_id: collectionMemberId,
-    payer_name: payerName,
-    payer_email: payerEmail,
+    payer_name: member.name,
     amount,
     status: "paid",
     payment_method: "card",

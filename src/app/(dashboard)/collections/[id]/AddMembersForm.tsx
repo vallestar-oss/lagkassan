@@ -12,13 +12,7 @@ import { FormError } from "@/components/ui/FormError";
 type State = { error: string | null; added: number; skipped: string[] };
 const initial: State = { error: null, added: 0, skipped: [] };
 
-export function AddMembersForm({
-  collectionId,
-  isFreeForm,
-}: {
-  collectionId: string;
-  isFreeForm: boolean;
-}) {
+export function AddMembersForm({ collectionId }: { collectionId: string }) {
   const boundAction = addCollectionMembers.bind(null, collectionId);
   const [state, action, isPending] = useActionState(boundAction, initial);
 
@@ -26,11 +20,6 @@ export function AddMembersForm({
     <Card className="overflow-hidden">
       <div className="px-5 py-4 border-b border-surface-border bg-surface-alt/40">
         <SectionLabel>Lägg till deltagare</SectionLabel>
-        {isFreeForm && (
-          <p className="text-xs text-text-muted mt-1">
-            Obs: förfrågan saknar deltagarlista ännu. Att lägga till deltagare aktiverar namnvalsflödet på betalningssidan.
-          </p>
-        )}
       </div>
 
       <form action={action} className="p-5 flex flex-col gap-3">

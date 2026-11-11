@@ -69,6 +69,10 @@ export async function createCollection(
     ],
     MAX_MEMBERS_PER_COLLECTION,
   );
+  // Every collection has a participant list — that list is what the public
+  // page shows and what the treasurer confirms payments against.
+  if (allNames.length === 0)
+    return { error: "Välj minst en person som ska betala." };
   if (tooMany)
     return { error: `Max ${MAX_MEMBERS_PER_COLLECTION} deltagare per förfrågan.` };
 
@@ -89,25 +93,19 @@ export async function createCollection(
 
   if (error || !collection) return { error: "Kunde inte skapa förfrågan. Försök igen." };
 
-  // Copy selected roster names + any extra names into collection_members.
-  // If none are selected the collection is created without members (fallback
-  // to free-form payment page — see /p/[slug]).
-  if (allNames.length > 0) {
-    const { error: membersError } = await supabase.from("collection_members").insert(
-      allNames.map((name) => ({
-        collection_id: collection.id,
-        name,
-        status: "unpaid",
-      })),
-    );
-    if (membersError) {
-      // Don't leave a half-created collection behind (it would silently fall
-      // back to the free-form payment page). No RLS delete policy exists on
-      // collections, so remove it with the service role — safe here because
-      // we just created this exact row as the verified caller.
-      await createAdminClient().from("collections").delete().eq("id", collection.id);
-      return { error: "Kunde inte lägga till deltagarna. Försök igen." };
-    }
+  const { error: membersError } = await supabase.from("collection_members").insert(
+    allNames.map((name) => ({
+      collection_id: collection.id,
+      name,
+      status: "unpaid",
+    })),
+  );
+  if (membersError) {
+    // Don't leave a collection without participants behind. No RLS delete
+    // policy exists on collections, so remove it with the service role — safe
+    // here because we just created this exact row as the verified caller.
+    await createAdminClient().from("collections").delete().eq("id", collection.id);
+    return { error: "Kunde inte lägga till deltagarna. Försök igen." };
   }
 
   revalidatePath("/dashboard");
@@ -386,6 +384,14 @@ export async function removeCollectionMember(
   if (!member) return { error: "Deltagaren hittades inte." };
   if (member.status !== "unpaid")
     return { error: "Det går inte att ta bort en deltagare som har rapporterat eller fått bekräftad betalning." };
+
+  // A collection must always keep at least one participant.
+  const { count } = await supabase
+    .from("collection_members")
+    .select("id", { count: "exact", head: true })
+    .eq("collection_id", collectionId);
+  if ((count ?? 0) <= 1)
+    return { error: "En förfrågan måste ha minst en deltagare. Stäng förfrågan i stället." };
 
   const { error } = await supabase
     .from("collection_members")

@@ -229,7 +229,12 @@ export function CollectionForm({
         </button>
       </Card>
 
-      <Button type="submit" variant="primary" disabled={isPending} className="w-full">
+      {selectedCount === 0 && (
+        <p className="text-xs text-text-muted text-center -mb-2">
+          Välj minst en person som ska betala.
+        </p>
+      )}
+      <Button type="submit" variant="primary" disabled={isPending || selectedCount === 0} className="w-full">
         {isPending ? "Skapar…" : "Skapa och hämta länk"}
       </Button>
     </form>
