@@ -5,6 +5,7 @@ import { createTeam, type TeamState } from "../actions";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { cardClass, inputClass, cn } from "@/lib/ui";
+import { FormError } from "@/components/ui/FormError";
 
 const initial: TeamState = { error: null };
 
@@ -13,11 +14,7 @@ export function TeamForm({ isFirstTeam }: { isFirstTeam: boolean }) {
 
   return (
     <form action={action} className={cn(cardClass, "p-6 sm:p-7 flex flex-col gap-5")}>
-      {state.error && (
-        <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-          {state.error}
-        </p>
-      )}
+      <FormError message={state.error} />
 
       <Field label="Namn på laget/gruppen">
         <input

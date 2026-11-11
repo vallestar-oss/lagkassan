@@ -14,6 +14,7 @@ import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { inputClass, buttonClass } from "@/lib/ui";
+import { FormError } from "@/components/ui/FormError";
 
 type Member = { id: string; name: string; phone: string | null };
 
@@ -65,11 +66,7 @@ export function RosterManager({
               <form ref={formRef} action={action} className="flex flex-col gap-4">
                 <SectionLabel>Lägg till medlem</SectionLabel>
 
-                {state.error && (
-                  <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-                    {state.error}
-                  </p>
-                )}
+                <FormError message={state.error} />
 
                 <input type="hidden" name="team_id" value={teamId} />
 

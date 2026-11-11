@@ -5,6 +5,7 @@ import { updatePaymentInstructions } from "../actions";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { textareaClass } from "@/lib/ui";
+import { FormError } from "@/components/ui/FormError";
 
 const initial = { error: null, saved: false };
 
@@ -30,11 +31,7 @@ export function EditInstructionsForm({
         />
       </Field>
 
-      {state.error && (
-        <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-          {state.error}
-        </p>
-      )}
+      <FormError message={state.error} />
 
       {state.saved && !state.error && (
         <p className="text-sm text-success">Instruktionerna har sparats.</p>

@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn, signInAsGuest, type AuthState, type GuestState } from "../actions";
 import { Suspense } from "react";
+import { FormError } from "@/components/ui/FormError";
 
 const initial: AuthState = { error: null };
 const guestInitial: GuestState = { error: null };
@@ -28,11 +29,7 @@ function LoginForm() {
       </div>
 
       <form action={action} className="flex flex-col gap-4">
-        {state.error && (
-          <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-            {state.error}
-          </p>
-        )}
+        <FormError message={state.error} />
 
         {/* Pass redirect through the form so the server action can use it */}
         {redirect && <input type="hidden" name="redirect" value={redirect} />}
@@ -88,11 +85,7 @@ function LoginForm() {
           Testa appen direkt med ett tomt konto — inget lösenord, ingen e-post.
         </p>
 
-        {guestState.error && (
-          <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-            {guestState.error}
-          </p>
-        )}
+        <FormError message={guestState.error} />
 
         <input
           name="guest_name"

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { signUp, type AuthState } from "../actions";
+import { FormError } from "@/components/ui/FormError";
 
 const initial: AuthState = { error: null };
 
@@ -21,11 +22,7 @@ export default function SignupPage() {
         </p>
       </div>
 
-      {state.error && (
-        <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-          {state.error}
-        </p>
-      )}
+      <FormError message={state.error} />
 
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">

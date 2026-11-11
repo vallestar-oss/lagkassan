@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { inputClass, textareaClass } from "@/lib/ui";
+import { FormError } from "@/components/ui/FormError";
 
 const initial: CollectionState = { error: null };
 
@@ -61,11 +62,7 @@ export function CollectionForm({
 
   return (
     <form action={action} className="flex flex-col gap-5">
-      {state.error && (
-        <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-          {state.error}
-        </p>
-      )}
+      <FormError message={state.error} />
 
       {/* Team selector (read-only info panel when only one team) */}
       {teams.length === 1 ? (

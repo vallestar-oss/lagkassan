@@ -6,6 +6,9 @@ import { formatOre } from "@/lib/utils";
 import { Card } from "@/components/ui/Card";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { FormError } from "@/components/ui/FormError";
+import { IconCheck } from "@/components/icons";
+import { NoMoneyNote, PaymentSuccess } from "./PaymentParts";
 
 type Member = { id: string; name: string; status: string };
 
@@ -15,14 +18,6 @@ function abbreviateName(fullName: string): string {
   const parts = fullName.trim().split(/\s+/);
   if (parts.length === 1) return parts[0];
   return `${parts[0]} ${parts[parts.length - 1][0].toUpperCase()}.`;
-}
-
-function IconCheck({ className }: { className?: string }) {
-  return (
-    <svg className={className} fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
-      <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-    </svg>
-  );
 }
 
 export function RosterPaymentFlow({
@@ -41,17 +36,7 @@ export function RosterPaymentFlow({
 
   if (state.success) {
     return (
-      <div className="bg-success-light border border-success/30 rounded-lg shadow-card p-6 text-center flex flex-col gap-3">
-        <div className="w-12 h-12 rounded-full bg-success/10 flex items-center justify-center mx-auto">
-          <IconCheck className="w-6 h-6 text-success" />
-        </div>
-        <div>
-          <p className="font-semibold text-text-primary">Tack!</p>
-          <p className="text-sm text-text-muted mt-1">
-            Din betalning är rapporterad. Kassören kontrollerar mot Swish eller bank och bekräftar.
-          </p>
-        </div>
-      </div>
+      <PaymentSuccess message="Din betalning är rapporterad. Kassören kontrollerar mot Swish eller bank och bekräftar." />
     );
   }
 
@@ -122,11 +107,7 @@ export function RosterPaymentFlow({
                 <span className="text-accent">{abbreviateName(selectedMember.name)}</span>
               </p>
 
-              {state.error && (
-                <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-                  {state.error}
-                </p>
-              )}
+              <FormError message={state.error} />
 
               <input type="hidden" name="collection_id" value={collectionId} />
               {/* amount is intentionally NOT submitted — the server reads it from
@@ -134,12 +115,7 @@ export function RosterPaymentFlow({
               <input type="hidden" name="payer_name" value={selectedMember.name} />
               <input type="hidden" name="collection_member_id" value={selectedMember.id} />
 
-              <div className="flex items-center gap-1.5 text-xs text-text-muted bg-surface-alt rounded-md px-3 py-2">
-                <svg className="w-3.5 h-3.5 text-success flex-shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
-                </svg>
-                <span>Inga kortuppgifter — Lagkassan hanterar inga pengar</span>
-              </div>
+              <NoMoneyNote />
 
               <Button type="submit" variant="primary" disabled={isPending} className="w-full">
                 {isPending ? "Registrerar…" : `Jag har betalat — ${formatOre(amount)}`}

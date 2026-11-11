@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { updatePassword, type UpdatePasswordState } from "./actions";
+import { FormError } from "@/components/ui/FormError";
 
 const initial: UpdatePasswordState = { error: null, success: false };
 
@@ -33,11 +34,7 @@ export function UpdatePasswordForm() {
         <p className="text-sm text-text-muted mt-1">Välj ett nytt lösenord för ditt konto.</p>
       </div>
 
-      {state.error && (
-        <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-          {state.error}
-        </p>
-      )}
+      <FormError message={state.error} />
 
       <div className="flex flex-col gap-4">
         <label className="flex flex-col gap-1.5">

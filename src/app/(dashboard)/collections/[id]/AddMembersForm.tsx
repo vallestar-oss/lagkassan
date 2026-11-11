@@ -7,6 +7,7 @@ import { Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { textareaClass } from "@/lib/ui";
+import { FormError } from "@/components/ui/FormError";
 
 type State = { error: string | null; added: number; skipped: string[] };
 const initial: State = { error: null, added: 0, skipped: [] };
@@ -42,11 +43,7 @@ export function AddMembersForm({
           />
         </Field>
 
-        {state.error && (
-          <p className="text-sm text-danger bg-danger-light border border-danger/20 rounded px-3 py-2">
-            {state.error}
-          </p>
-        )}
+        <FormError message={state.error} />
 
         {!state.error && state.added > 0 && (
           <div className="text-sm bg-success-light border border-success/20 rounded px-3 py-2 flex flex-col gap-1">
