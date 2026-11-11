@@ -13,8 +13,6 @@ export async function createTeam(
   formData: FormData,
 ): Promise<TeamState> {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { error: "Inte inloggad." };
 
   const name = (formData.get("name") as string | null)?.trim() ?? "";
   const description = (formData.get("description") as string | null)?.trim() ?? "";
@@ -23,43 +21,17 @@ export async function createTeam(
   if (name.length > 100) return { error: "Lagets namn får vara högst 100 tecken." };
   if (description.length > 500) return { error: "Beskrivningen får vara högst 500 tecken." };
 
-  // create_team inserts the team and the caller's owner row in one
-  // transaction (migration 20261111000000_secure_team_creation), so a failure
-  // can never leave an ownerless team behind.
+  // create_team checks the session itself (auth.uid()) and inserts the team
+  // and the caller's owner row in one transaction (migration
+  // 20261111000000_secure_team_creation), so a failure can never leave an
+  // ownerless team behind. Direct inserts into teams/team_members are not
+  // allowed for new teams.
   const { data: teamId, error } = await supabase.rpc("create_team", {
     p_name: name,
     p_description: description || null,
   });
 
-  // TODO: remove this fallback once the migration has been applied in
-  // production. PGRST202 = function not found (migration not applied yet).
-  if (error?.code === "PGRST202") return createTeamLegacy(supabase, user.id, name, description);
-
   if (error || !teamId) return { error: "Kunde inte skapa laget. Försök igen." };
-
-  revalidatePath("/dashboard", "layout");
-  redirect(`/teams/${teamId}`);
-}
-
-async function createTeamLegacy(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-  userId: string,
-  name: string,
-  description: string,
-): Promise<TeamState> {
-  const teamId = crypto.randomUUID();
-
-  const { error: teamError } = await supabase
-    .from("teams")
-    .insert({ id: teamId, name, description: description || null });
-
-  if (teamError) return { error: "Kunde inte skapa laget. Försök igen." };
-
-  const { error: memberError } = await supabase
-    .from("team_members")
-    .insert({ team_id: teamId, user_id: userId, role: "owner" });
-
-  if (memberError) return { error: "Kunde inte skapa laget. Försök igen." };
 
   // Bust the dashboard layout cache so the sidebar's "Mina lag" list shows
   // the new team immediately, without a manual browser refresh.
