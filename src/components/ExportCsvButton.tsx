@@ -1,5 +1,7 @@
 "use client";
 
+import { escapeCsvCell } from "@/lib/csv";
+
 type Props = {
   filename: string;
   headers: string[];
@@ -8,15 +10,8 @@ type Props = {
 };
 
 // Semicolon-delimited: Swedish-locale Excel opens semicolon CSVs directly
-// without a manual "text to columns" import step.
-function escapeCsvCell(value: string | number): string {
-  const str = String(value);
-  if (/[";\n]/.test(str)) {
-    return `"${str.replace(/"/g, '""')}"`;
-  }
-  return str;
-}
-
+// without a manual "text to columns" import step. Cell escaping (including
+// CSV-injection protection) lives in @/lib/csv.
 export function ExportCsvButton({ filename, headers, rows, label = "Exportera CSV" }: Props) {
   function handleExport() {
     const lines = [headers, ...rows].map((row) => row.map(escapeCsvCell).join(";"));
