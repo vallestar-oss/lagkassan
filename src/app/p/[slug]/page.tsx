@@ -1,35 +1,55 @@
 import type { Metadata } from "next";
+import { cache } from "react";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatOre, formatSwedishDate } from "@/lib/utils";
+import { formatOre, formatSwedishDate, isPastDeadline } from "@/lib/utils";
 import { RosterPaymentFlow } from "./RosterPaymentFlow";
 import { Card } from "@/components/ui/Card";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 
-// Payment links are shared privately — keep them out of search results.
-export const metadata: Metadata = {
-  robots: { index: false, follow: false },
-};
+type Props = { params: Promise<{ slug: string }> };
 
-export default async function PublicPaymentPage({
-  params,
-}: {
-  params: Promise<{ slug: string }>;
-}) {
-  const { slug } = await params;
+// The anon role has NO direct table access (see migration
+// 20260707000000_lock_down_anon_access). The public page reads exactly one
+// collection + its roster through two SECURITY DEFINER functions scoped by
+// slug / id, so no other association's data is ever enumerable. The function
+// also joins teams, returning the association name in the same round-trip.
+// cache() lets generateMetadata and the page share one lookup per request.
+const getCollection = cache(async (slug: string) => {
   const supabase = await createClient();
+  const { data } = await supabase.rpc("get_public_collection", { p_slug: slug });
+  return data?.[0] ?? null;
+});
 
-  // The anon role has NO direct table access (see migration
-  // 20260707000000_lock_down_anon_access). The public page reads exactly one
-  // collection + its roster through two SECURITY DEFINER functions scoped by
-  // slug / id, so no other association's data is ever enumerable. The function
-  // also joins teams, returning the association name in the same round-trip.
-  const { data: collectionRows } = await supabase.rpc("get_public_collection", {
-    p_slug: slug,
-  });
-  const collection = collectionRows?.[0];
+// Title and description are what WhatsApp/Messenger show when the link is
+// shared. Payment links are private, so they stay out of search results.
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const collection = await getCollection((await params).slug);
+  const robots = { index: false, follow: false };
+  if (!collection) return { title: "Länken hittades inte · Lagkassan", robots };
+
+  const title = `${collection.title} · ${collection.team_name}`;
+  const description = collection.deadline
+    ? `${formatOre(collection.amount)} senast ${formatSwedishDate(collection.deadline)}. Välj ditt namn och markera din betalning.`
+    : `${formatOre(collection.amount)}. Välj ditt namn och markera din betalning.`;
+
+  return {
+    title,
+    description,
+    robots,
+    openGraph: { title, description, type: "website" },
+    twitter: { card: "summary", title, description },
+  };
+}
+
+export default async function PublicPaymentPage({ params }: Props) {
+  const { slug } = await params;
+  const collection = await getCollection(slug);
 
   if (!collection) notFound();
+
+  const supabase = await createClient();
+  const deadlinePassed = isPastDeadline(collection.deadline);
 
   const { data: memberRows } = await supabase.rpc(
     "get_public_collection_members",
@@ -71,12 +91,17 @@ export default async function PublicPaymentPage({
             {collection.deadline && (
               <div className="ml-auto text-right">
                 <p className="text-xs text-text-muted">Sista betalningsdag</p>
-                <p className="text-sm font-medium text-text-primary mt-0.5">
+                <p className={`text-sm font-medium mt-0.5 ${deadlinePassed ? "text-amber-700" : "text-text-primary"}`}>
                   {formatSwedishDate(collection.deadline)}
                 </p>
               </div>
             )}
           </div>
+          {deadlinePassed && (
+            <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 mt-4">
+              Sista betalningsdagen har passerat. Betala så snart du kan, eller kontakta kassören.
+            </p>
+          )}
         </Card>
 
         {/* Så fungerar det — explicit steps so members never think Lagkassan takes the payment */}

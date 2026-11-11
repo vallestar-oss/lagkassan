@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import QRCode from "qrcode";
 import { createClient, requireUser } from "@/lib/supabase/server";
-import { formatOre, formatSwedishDate } from "@/lib/utils";
+import { formatOre, formatSwedishDate, isPastDeadline } from "@/lib/utils";
 import {
   markMemberPaid,
   setCollectionStatus,
@@ -143,6 +143,15 @@ export default async function CollectionDetailPage({
         <StatCard label="Bekräftat av kassör" value={formatOre(confirmedAmount)} />
         <StatCard label="Kvar att bekräfta" value={formatOre(remainingAmount)} />
       </div>
+
+      {/* Deadline passed while still collecting — nudge the treasurer */}
+      {collection.status === "active" && collection.deadline && isPastDeadline(collection.deadline) && (
+        <p className="text-xs text-amber-800 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 leading-relaxed">
+          Sista betalningsdagen ({formatSwedishDate(collection.deadline)}) har passerat.
+          {unpaidCount > 0 && ` ${unpaidCount} har inte betalat än.`}
+          {canEdit && " Stäng förfrågan när du är klar, så slutar länken ta emot betalningar."}
+        </p>
+      )}
 
       {/* Missing payment instructions warning — active collections only */}
       {collection.status === "active" && !collection.payment_instructions && (

@@ -21,6 +21,16 @@ export function formatSwedishDate(dateStr: string): string {
   });
 }
 
+/**
+ * True when a 'YYYY-MM-DD' deadline is before today's date in Sweden. The
+ * deadline day itself still counts as on time.
+ */
+export function isPastDeadline(deadline: string | null, now: Date = new Date()): boolean {
+  if (!deadline) return false;
+  const today = now.toLocaleDateString("sv-SE", { timeZone: "Europe/Stockholm" });
+  return deadline < today;
+}
+
 export function formatSwedishDateTime(isoString: string): string {
   return new Date(isoString).toLocaleString("sv-SE", {
     day: "numeric",

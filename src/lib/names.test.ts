@@ -1,5 +1,34 @@
 import { describe, expect, it } from "vitest";
-import { MAX_NAME_LENGTH, normalizeNames, parseNameList, splitNewNames } from "./names";
+import { MAX_NAME_LENGTH, normalizeNames, parseNameList, shortNames, splitNewNames } from "./names";
+
+describe("shortNames", () => {
+  it("shortens to first name + last initial", () => {
+    expect(shortNames(["Anna Lindqvist", "Erik Johansson", "maria"])).toEqual([
+      "Anna L.",
+      "Erik J.",
+      "maria",
+    ]);
+  });
+
+  it("shows more of the last name when two labels would clash", () => {
+    expect(shortNames(["Anna Test", "Anna Thorsson", "Bo Test"])).toEqual([
+      "Anna Te.",
+      "Anna Th.",
+      "Bo T.",
+    ]);
+  });
+
+  it("uses the whole last name when one is a prefix of the other", () => {
+    expect(shortNames(["Anna Te", "Anna Test"])).toEqual(["Anna Te", "Anna Tes."]);
+  });
+
+  it("falls back to full names when only middle names differ", () => {
+    expect(shortNames(["Anna Maria Test", "Anna Lisa Test"])).toEqual([
+      "Anna Maria Test",
+      "Anna Lisa Test",
+    ]);
+  });
+});
 
 describe("parseNameList", () => {
   it("splits on newlines, trims and drops blank lines", () => {
