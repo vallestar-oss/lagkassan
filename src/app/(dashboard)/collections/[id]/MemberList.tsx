@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
 import { formatOre, formatSwedishDateTime, toFilename } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -67,10 +67,13 @@ export function MemberList({
 }) {
   const [filter, setFilter] = useState<FilterKey>("all");
   const [search, setSearch] = useState("");
-  // Tracks which single "member:action" pair is in flight so only that row's
-  // button disables/shows a loading label — prevents double-submits without
-  // freezing the whole list.
+  // Tracks which single "member:action" pair is in flight. The action runs in
+  // a transition, so `isPending` stays true until the refreshed list has been
+  // rendered — the row stays locked instead of looking clickable while the
+  // old data is still on screen. Other rows remain usable.
   const [pendingKey, setPendingKey] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
+  const busyKey = isPending ? pendingKey : null;
   const [rowError, setRowError] = useState<{ key: string; message: string } | null>(null);
 
   const counts: Record<FilterKey, number> = {
@@ -86,13 +89,14 @@ export function MemberList({
     ? byStatus.filter((m) => m.name.toLowerCase().includes(query))
     : byStatus;
 
-  async function runAction({ key, run, confirmText }: RowAction) {
+  function runAction({ key, run, confirmText }: RowAction) {
     if (confirmText && !window.confirm(confirmText)) return;
     setPendingKey(key);
     setRowError(null);
-    const res = await run();
-    setPendingKey(null);
-    if (res.error) setRowError({ key, message: res.error });
+    startTransition(async () => {
+      const res = await run();
+      if (res.error) setRowError({ key, message: res.error });
+    });
   }
 
   // The buttons a treasurer gets for a member, by payment status.
@@ -232,11 +236,11 @@ export function MemberList({
                           type="button"
                           variant={a.variant}
                           size="chip"
-                          disabled={pendingKey === a.key}
+                          disabled={busyKey?.startsWith(`${member.id}:`)}
                           onClick={() => runAction(a)}
                           aria-label={a.ariaLabel}
                         >
-                          {pendingKey === a.key ? "…" : a.label}
+                          {busyKey === a.key ? "…" : a.label}
                         </Button>
                       ))}
                     </div>
