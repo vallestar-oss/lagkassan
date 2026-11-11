@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { signIn, signInAsGuest, type AuthState, type GuestState } from "../actions";
+import { buttonClass, inputClass } from "@/lib/ui";
 import { Suspense } from "react";
 import { FormError } from "@/components/ui/FormError";
 
@@ -43,7 +44,7 @@ function LoginForm() {
               required
               autoComplete="email"
               placeholder="kassoren@foreningen.se"
-              className="border border-surface-border rounded-md px-3 py-2 text-sm text-text-primary bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+              className={inputClass}
             />
           </label>
 
@@ -60,7 +61,7 @@ function LoginForm() {
               required
               autoComplete="current-password"
               placeholder="••••••••"
-              className="border border-surface-border rounded-md px-3 py-2 text-sm text-text-primary bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+              className={inputClass}
             />
           </label>
         </div>
@@ -68,7 +69,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isPending}
-          className="w-full bg-accent text-white font-semibold text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className={buttonClass("primary", "md", "w-full")}
         >
           {isPending ? "Loggar in…" : "Logga in"}
         </button>
@@ -93,13 +94,13 @@ function LoginForm() {
           autoComplete="off"
           placeholder="Ditt namn"
           maxLength={100}
-          className="border border-surface-border rounded-md px-3 py-2 text-sm text-text-primary bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+          className={inputClass}
         />
 
         <button
           type="submit"
           disabled={guestIsPending}
-          className="w-full border border-surface-border text-text-primary font-semibold text-sm py-2.5 rounded-md hover:bg-surface-border/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+          className={buttonClass("secondary", "md", "w-full")}
         >
           {guestIsPending ? "Startar…" : "Testa utan konto"}
         </button>

@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { updatePassword, type UpdatePasswordState } from "./actions";
+import { buttonClass, inputClass } from "@/lib/ui";
 import { FormError } from "@/components/ui/FormError";
 
 const initial: UpdatePasswordState = { error: null, success: false };
@@ -49,7 +50,7 @@ export function UpdatePasswordForm() {
             minLength={8}
             autoComplete="new-password"
             placeholder="••••••••"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm text-text-primary bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+            className={inputClass}
           />
         </label>
 
@@ -62,7 +63,7 @@ export function UpdatePasswordForm() {
             minLength={8}
             autoComplete="new-password"
             placeholder="••••••••"
-            className="border border-surface-border rounded-md px-3 py-2 text-sm text-text-primary bg-white placeholder:text-text-muted focus:outline-none focus:border-accent focus:ring-2 focus:ring-accent-light transition-colors"
+            className={inputClass}
           />
         </label>
       </div>
@@ -70,7 +71,7 @@ export function UpdatePasswordForm() {
       <button
         type="submit"
         disabled={isPending}
-        className="w-full bg-accent text-white font-semibold text-sm py-2.5 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+        className={buttonClass("primary", "md", "w-full")}
       >
         {isPending ? "Uppdaterar…" : "Uppdatera lösenord"}
       </button>
