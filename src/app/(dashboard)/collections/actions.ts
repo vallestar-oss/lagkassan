@@ -4,10 +4,16 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertTeamRole, assertCollectionRole } from "@/lib/auth";
 import { parseSekToOre } from "@/lib/utils";
+import { normalizeNames } from "@/lib/names";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 export type CollectionState = { error: string | null };
+
+const MAX_TITLE_LENGTH = 120;
+const MAX_TEXT_LENGTH = 2000;
+const MAX_AMOUNT_ORE = 1_000_000 * 100; // 1 000 000 kr per person
+const MAX_MEMBERS_PER_COLLECTION = 200; // same cap as addCollectionMembers
 
 // Revalidate every view that shows this collection's summary/status so the
 // dashboard, team page, and collection detail page never show stale counts.
@@ -39,11 +45,32 @@ export async function createCollection(
   const deadline = (formData.get("deadline") as string | null) ?? "";
 
   if (!title) return { error: "Rubrik är obligatorisk." };
+  if (title.length > MAX_TITLE_LENGTH)
+    return { error: `Rubriken får vara högst ${MAX_TITLE_LENGTH} tecken.` };
+  if (description.length > MAX_TEXT_LENGTH || paymentInstructions.length > MAX_TEXT_LENGTH)
+    return { error: `Beskrivning och instruktioner får vara högst ${MAX_TEXT_LENGTH} tecken.` };
+  if (deadline && !/^\d{4}-\d{2}-\d{2}$/.test(deadline))
+    return { error: "Ogiltigt datum för sista betaldag." };
   if (!amountStr || isNaN(parseFloat(amountStr.replace(",", "."))))
     return { error: "Ange ett giltigt belopp." };
 
   const amount = parseSekToOre(amountStr);
-  if (amount <= 0) return { error: "Beloppet måste vara större än 0 kr." };
+  if (!Number.isFinite(amount) || amount <= 0)
+    return { error: "Beloppet måste vara större än 0 kr." };
+  if (amount > MAX_AMOUNT_ORE)
+    return { error: "Beloppet är för högt. Max 1 000 000 kr per person." };
+
+  // Roster names + any extra names, cleaned the same way as addCollectionMembers
+  // (trimmed, length-capped, de-duplicated, max count).
+  const { names: allNames, tooMany } = normalizeNames(
+    [
+      ...(formData.getAll("member_name") as string[]),
+      ...(formData.getAll("extra_name") as string[]),
+    ],
+    MAX_MEMBERS_PER_COLLECTION,
+  );
+  if (tooMany)
+    return { error: `Max ${MAX_MEMBERS_PER_COLLECTION} deltagare per förfrågan.` };
 
   const { data: collection, error } = await supabase
     .from("collections")
@@ -65,20 +92,22 @@ export async function createCollection(
   // Copy selected roster names + any extra names into collection_members.
   // If none are selected the collection is created without members (fallback
   // to free-form payment page — see /p/[slug]).
-  const memberNames = formData.getAll("member_name") as string[];
-  const extraNames = (formData.getAll("extra_name") as string[])
-    .map((n) => n.trim())
-    .filter(Boolean);
-  const allNames = [...memberNames, ...extraNames];
-
   if (allNames.length > 0) {
-    await supabase.from("collection_members").insert(
+    const { error: membersError } = await supabase.from("collection_members").insert(
       allNames.map((name) => ({
         collection_id: collection.id,
         name,
         status: "unpaid",
       })),
     );
+    if (membersError) {
+      // Don't leave a half-created collection behind (it would silently fall
+      // back to the free-form payment page). No RLS delete policy exists on
+      // collections, so remove it with the service role — safe here because
+      // we just created this exact row as the verified caller.
+      await createAdminClient().from("collections").delete().eq("id", collection.id);
+      return { error: "Kunde inte lägga till deltagarna. Försök igen." };
+    }
   }
 
   revalidatePath("/dashboard");
@@ -271,25 +300,30 @@ export async function revertMemberPayment(
       .eq("collection_id", collectionId);
     if (error) return { error: "Kunde inte återställa statusen. Försök igen." };
   } else {
-    // reported_paid → unpaid: clear all timestamps and delete the payment row
-    // so the member can self-report again. No treasurer DELETE policy exists on
-    // payments, so we use the admin (service-role) client which bypasses RLS.
+    // reported_paid → unpaid: delete the payment row so the member can
+    // self-report again, then clear the status. No treasurer DELETE policy
+    // exists on payments, so we use the admin (service-role) client which
+    // bypasses RLS.
+    //
+    // Order matters: the payment goes FIRST and its error is checked. A
+    // lingering paid row is NOT harmless — the partial unique index
+    // idx_one_paid_per_member would reject the member's next report with
+    // "already paid" while the status says unpaid. If the status update fails
+    // after the delete, the member is merely still 'reported_paid' with no
+    // payment row, and the treasurer can simply retry the revert.
+    const { error: paymentError } = await createAdminClient()
+      .from("payments")
+      .delete()
+      .eq("collection_member_id", memberId)
+      .eq("collection_id", collectionId);
+    if (paymentError) return { error: "Kunde inte återställa statusen. Försök igen." };
+
     const { error: memberError } = await supabase
       .from("collection_members")
       .update({ status: "unpaid", reported_at: null, confirmed_at: null, confirmed_by: null })
       .eq("id", memberId)
       .eq("collection_id", collectionId);
     if (memberError) return { error: "Kunde inte återställa statusen. Försök igen." };
-
-    const admin = createAdminClient();
-    await admin
-      .from("payments")
-      .delete()
-      .eq("collection_member_id", memberId)
-      .eq("collection_id", collectionId);
-    // Ignore payment-delete errors — member status is already reset, and a
-    // lingering payment row is harmless once the member is unpaid (the unique
-    // index only blocks inserts, not reads).
   }
 
   revalidateCollectionViews(collectionId, teamId);
