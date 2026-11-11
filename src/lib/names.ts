@@ -21,3 +21,36 @@ export function normalizeNames(
   }
   return { names, tooMany: names.length > maxCount };
 }
+
+/** Splits a pasted textarea value (one name per line) into trimmed, capped names. */
+export function parseNameList(raw: string): string[] {
+  return raw
+    .split("\n")
+    .map((n) => n.trim())
+    .filter(Boolean)
+    .map((n) => n.slice(0, MAX_NAME_LENGTH));
+}
+
+/**
+ * Separates names to insert from names to skip: a name is skipped when it
+ * already exists, or repeats an earlier name in the same list
+ * (case-insensitive). Skipped names are reported back to the user.
+ */
+export function splitNewNames(
+  names: string[],
+  existing: string[],
+): { toInsert: string[]; skipped: string[] } {
+  const seen = new Set(existing.map((n) => n.trim().toLowerCase()));
+  const toInsert: string[] = [];
+  const skipped: string[] = [];
+  for (const name of names) {
+    const key = name.toLowerCase();
+    if (seen.has(key)) {
+      skipped.push(name);
+    } else {
+      seen.add(key);
+      toInsert.push(name);
+    }
+  }
+  return { toInsert, skipped };
+}

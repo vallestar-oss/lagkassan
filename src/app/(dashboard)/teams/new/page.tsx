@@ -1,12 +1,10 @@
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireUser } from "@/lib/supabase/server";
 import { OnboardingSteps } from "../../OnboardingSteps";
 import { TeamForm } from "./TeamForm";
 
 export default async function NewTeamPage() {
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const user = await requireUser(supabase);
 
   const { count } = await supabase
     .from("team_members")

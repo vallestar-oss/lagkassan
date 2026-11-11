@@ -6,6 +6,7 @@ import { AutoRefresh } from "@/components/AutoRefresh";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import { buttonClass } from "@/lib/ui";
+import { fetchCollectionCounts } from "@/lib/collectionCounts";
 
 function IconPlus() {
   return (
@@ -51,41 +52,13 @@ async function getPageData(): Promise<{
     .in("team_id", teamIds)
     .order("created_at", { ascending: false });
 
-  const collectionIds = (rawCollections ?? []).map((c) => c.id);
-
-  const [{ data: payments }, { data: memberRows }] = await Promise.all([
-    collectionIds.length
-      ? supabase
-          .from("payments")
-          .select("collection_id, status")
-          .in("collection_id", collectionIds)
-      : { data: [] },
-    collectionIds.length
-      ? supabase
-          .from("collection_members")
-          .select("collection_id, status")
-          .in("collection_id", collectionIds)
-          .returns<{ collection_id: string; status: string }[]>()
-      : { data: [] as { collection_id: string; status: string }[] },
-  ]);
-
-  const paymentMap: Record<string, { paid: number; total: number }> = {};
-  for (const p of payments ?? []) {
-    if (!paymentMap[p.collection_id]) paymentMap[p.collection_id] = { paid: 0, total: 0 };
-    paymentMap[p.collection_id].total++;
-    if (p.status === "paid") paymentMap[p.collection_id].paid++;
-  }
-
-  const memberMap: Record<string, { paid: number; total: number }> = {};
-  for (const m of memberRows ?? []) {
-    if (!memberMap[m.collection_id]) memberMap[m.collection_id] = { paid: 0, total: 0 };
-    memberMap[m.collection_id].total++;
-    if (m.status !== "unpaid") memberMap[m.collection_id].paid++;
-  }
+  const countsById = await fetchCollectionCounts(
+    supabase,
+    (rawCollections ?? []).map((c) => c.id),
+  );
 
   const collections = (rawCollections ?? []).map((c) => {
-    // Prefer collection_members counts for rostered collections.
-    const counts = memberMap[c.id]?.total ? memberMap[c.id] : (paymentMap[c.id] ?? { paid: 0, total: 0 });
+    const counts = countsById[c.id] ?? { paid: 0, total: 0 };
     return {
       id: c.id,
       title: c.title,

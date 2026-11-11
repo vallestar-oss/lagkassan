@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { assertTeamRole } from "@/lib/auth";
+import { parseNameList, splitNewNames } from "@/lib/names";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -96,38 +97,19 @@ export async function addRosterMembersBulk(
   ]);
   if (authError) return { error: authError, added: 0, skipped: [] };
 
-  const raw = (formData.get("names") as string | null) ?? "";
-  const names = raw
-    .split("\n")
-    .map((n) => n.trim())
-    .filter(Boolean)
-    .map((n) => n.slice(0, 100)); // cap individual name length
+  const names = parseNameList((formData.get("names") as string | null) ?? "");
 
   if (names.length === 0)
     return { error: "Ange minst ett namn.", added: 0, skipped: [] };
   if (names.length > 500)
     return { error: "Max 500 namn per gång.", added: 0, skipped: [] };
 
-  // Fetch existing roster names for this team to deduplicate.
   const { data: existing } = await supabase
     .from("roster_members")
     .select("name")
     .eq("team_id", teamId);
 
-  const existingLower = new Set(
-    (existing ?? []).map((m) => m.name.trim().toLowerCase()),
-  );
-
-  const toInsert: string[] = [];
-  const skipped: string[] = [];
-  for (const name of names) {
-    if (existingLower.has(name.toLowerCase())) {
-      skipped.push(name);
-    } else {
-      toInsert.push(name);
-      existingLower.add(name.toLowerCase()); // prevent duplicates within the same pasted list
-    }
-  }
+  const { toInsert, skipped } = splitNewNames(names, (existing ?? []).map((m) => m.name));
 
   if (toInsert.length > 0) {
     const { error } = await supabase.from("roster_members").insert(

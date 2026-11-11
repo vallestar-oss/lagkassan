@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireUser } from "@/lib/supabase/server";
 import { CollectionForm } from "./CollectionForm";
 
 export default async function NewCollectionPage({
@@ -9,8 +9,7 @@ export default async function NewCollectionPage({
 }) {
   const { team: preselectedTeamId } = await searchParams;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const user = await requireUser(supabase);
 
   // Get the teams this user can create collections for (owner or treasurer).
   const { data: memberships } = await supabase

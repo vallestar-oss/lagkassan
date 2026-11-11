@@ -1,6 +1,6 @@
-import { notFound, redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import QRCode from "qrcode";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, requireUser } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate, formatSwedishDateTime } from "@/lib/utils";
 import {
   markMemberPaid,
@@ -30,8 +30,7 @@ export default async function CollectionDetailPage({
 }) {
   const { id } = await params;
   const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) redirect("/login");
+  const user = await requireUser(supabase);
 
   const { data: collection } = await supabase
     .from("collections")

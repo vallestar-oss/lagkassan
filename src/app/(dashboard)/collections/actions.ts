@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { assertTeamRole, assertCollectionRole } from "@/lib/auth";
 import { parseSekToOre } from "@/lib/utils";
-import { normalizeNames } from "@/lib/names";
+import { normalizeNames, parseNameList, splitNewNames } from "@/lib/names";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
@@ -324,38 +324,19 @@ export async function addCollectionMembers(
   if (col.status !== "active")
     return { error: "Det går bara att lägga till deltagare i aktiva förfrågningar.", added: 0, skipped: [] };
 
-  const raw = (formData.get("names") as string | null) ?? "";
-  const names = raw
-    .split("\n")
-    .map((n) => n.trim())
-    .filter(Boolean)
-    .map((n) => n.slice(0, 100)); // cap individual name length
+  const names = parseNameList((formData.get("names") as string | null) ?? "");
 
   if (names.length === 0)
     return { error: "Ange minst ett namn.", added: 0, skipped: [] };
-  if (names.length > 200)
-    return { error: "Max 200 namn per gång.", added: 0, skipped: [] };
+  if (names.length > MAX_MEMBERS_PER_COLLECTION)
+    return { error: `Max ${MAX_MEMBERS_PER_COLLECTION} namn per gång.`, added: 0, skipped: [] };
 
-  // Fetch existing names for this collection to deduplicate.
   const { data: existing } = await supabase
     .from("collection_members")
     .select("name")
     .eq("collection_id", collectionId);
 
-  const existingLower = new Set(
-    (existing ?? []).map((m) => m.name.trim().toLowerCase()),
-  );
-
-  const toInsert: string[] = [];
-  const skipped: string[] = [];
-  for (const name of names) {
-    if (existingLower.has(name.toLowerCase())) {
-      skipped.push(name);
-    } else {
-      toInsert.push(name);
-      existingLower.add(name.toLowerCase()); // prevent duplicates within the same submission
-    }
-  }
+  const { toInsert, skipped } = splitNewNames(names, (existing ?? []).map((m) => m.name));
 
   if (toInsert.length > 0) {
     const { error } = await supabase.from("collection_members").insert(

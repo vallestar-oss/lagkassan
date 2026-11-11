@@ -1,5 +1,7 @@
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import type { User } from "@supabase/supabase-js";
 import type { Database } from "@/types/database";
 
 export async function createClient() {
@@ -26,4 +28,13 @@ export async function createClient() {
       },
     },
   );
+}
+
+/** For signed-in pages: returns the current user, or redirects to /login. */
+export async function requireUser(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<User> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+  return user;
 }
