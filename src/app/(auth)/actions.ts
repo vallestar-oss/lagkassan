@@ -3,6 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { safeRedirectPath } from "@/lib/safeRedirect";
 
 export type AuthState = { error: string | null };
 
@@ -66,8 +67,7 @@ export async function signIn(
   if (error) return { error: translateError(error.message) };
 
   // Honor the redirect param set by middleware.
-  const redirectTo = (formData.get("redirect") as string | null) ?? "/dashboard";
-  redirect(redirectTo.startsWith("/") ? redirectTo : "/dashboard");
+  redirect(safeRedirectPath(formData.get("redirect") as string | null));
 }
 
 export type GuestState = { error: string | null };
