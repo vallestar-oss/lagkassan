@@ -115,37 +115,6 @@ export async function createCollection(
   redirect(`/collections/${collection.id}`);
 }
 
-// Treasurer manually marks a payment as paid (cash, bank transfer, etc.)
-export async function markPaid(
-  paymentId: string,
-  collectionId: string,
-): Promise<{ error: string | null }> {
-  const supabase = await createClient();
-
-  // Defense-in-depth: the payments RLS is permissive (public insert), so verify
-  // the caller is an owner/treasurer of this collection's team before writing.
-  const { teamId, error: authError } = await assertCollectionRole(supabase, collectionId, [
-    "owner",
-    "treasurer",
-  ]);
-  if (authError) return { error: authError };
-
-  // Scope by collection too — the role check above only covers collectionId,
-  // so the payment must be proven to belong to it.
-  const { data: updated, error } = await supabase
-    .from("payments")
-    .update({ status: "paid", paid_at: new Date().toISOString() })
-    .eq("id", paymentId)
-    .eq("collection_id", collectionId)
-    .select("id");
-
-  if (error) return { error: "Kunde inte uppdatera betalningen. Försök igen." };
-  if (!updated?.length) return { error: "Betalningen hittades inte." };
-
-  revalidateCollectionViews(collectionId, teamId);
-  return { error: null };
-}
-
 // Treasurer records a roster member as paid manually (cash / bank transfer),
 // vouching for it directly — no self-report/confirm step needed. Inserts a
 // payments row with payment_method:'manual' so the SECURITY DEFINER trigger

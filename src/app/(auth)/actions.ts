@@ -97,12 +97,6 @@ export async function signInAsGuest(
   redirect("/dashboard");
 }
 
-export async function signOut(): Promise<never> {
-  const supabase = await createClient();
-  await supabase.auth.signOut();
-  redirect("/login");
-}
-
 export type ForgotPasswordState = { submitted: boolean };
 
 // Always returns submitted:true regardless of outcome — never reveal whether

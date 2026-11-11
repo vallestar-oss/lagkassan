@@ -94,7 +94,7 @@ async function getPageData(): Promise<{
       status: c.status,
       slug: c.slug,
       team_name: (c.teams as { name: string } | null)?.name ?? "",
-      group_label: (c as { group_label?: string | null }).group_label ?? null,
+      group_label: c.group_label,
       paid_count: counts.paid,
       total_count: counts.total,
     };

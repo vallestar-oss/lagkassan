@@ -3,7 +3,6 @@ import QRCode from "qrcode";
 import { createClient } from "@/lib/supabase/server";
 import { formatOre, formatSwedishDate, formatSwedishDateTime } from "@/lib/utils";
 import {
-  markPaid,
   markMemberPaid,
   setCollectionStatus,
   removeCollectionMember,
@@ -21,7 +20,6 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { StatCard } from "@/components/ui/StatCard";
 import { Badge } from "@/components/ui/Badge";
 import { Card } from "@/components/ui/Card";
-import { Button } from "@/components/ui/Button";
 import { SectionLabel } from "@/components/ui/SectionLabel";
 import type { BadgeVariant } from "@/lib/ui";
 
@@ -54,13 +52,11 @@ export default async function CollectionDetailPage({
   if (!membership) notFound();
 
   // Load roster members — if any exist, they are the source of truth for stats.
-  // .returns<> is needed because the generated types predate the status column.
   const { data: memberRows } = await supabase
     .from("collection_members")
     .select("id, name, status, reported_at, confirmed_at")
     .eq("collection_id", id)
-    .order("name", { ascending: true })
-    .returns<{ id: string; name: string; status: string; reported_at: string | null; confirmed_at: string | null }[]>();
+    .order("name", { ascending: true });
 
   const rosterMembers = memberRows ?? [];
   const hasRoster = rosterMembers.length > 0;
@@ -242,17 +238,9 @@ export default async function CollectionDetailPage({
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
                     <span className="font-mono text-sm text-text-muted">{formatOre(payment.amount)}</span>
-                    {payment.status === "paid" ? (
-                      <Badge variant="success">Betald</Badge>
-                    ) : canEdit ? (
-                      <form action={async () => { "use server"; await markPaid(payment.id, id); }}>
-                        <Button type="submit" variant="secondary" size="sm">
-                          Markera betald
-                        </Button>
-                      </form>
-                    ) : (
-                      <Badge variant="neutral">Väntar</Badge>
-                    )}
+                    {/* Every payment row is written as status 'paid' (self-report or
+                        treasurer-recorded) — there is no pending state to act on. */}
+                    <Badge variant="success">Betald</Badge>
                   </div>
                 </li>
               ))}
