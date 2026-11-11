@@ -101,12 +101,17 @@ export async function markPaid(
   ]);
   if (authError) return { error: authError };
 
-  const { error } = await supabase
+  // Scope by collection too — the role check above only covers collectionId,
+  // so the payment must be proven to belong to it.
+  const { data: updated, error } = await supabase
     .from("payments")
     .update({ status: "paid", paid_at: new Date().toISOString() })
-    .eq("id", paymentId);
+    .eq("id", paymentId)
+    .eq("collection_id", collectionId)
+    .select("id");
 
   if (error) return { error: "Kunde inte uppdatera betalningen. Försök igen." };
+  if (!updated?.length) return { error: "Betalningen hittades inte." };
 
   revalidateCollectionViews(collectionId, teamId);
   return { error: null };
@@ -134,12 +139,17 @@ export async function markMemberPaid(
 
   // Fast-path: only unpaid members can be marked this way. The real guard
   // against the race is the partial unique index idx_one_paid_per_member.
+  // The member MUST belong to this collection: the payments trigger updates
+  // collection_members by id alone, so an unscoped lookup would let a
+  // treasurer flip a member of someone else's collection.
   const { data: member } = await supabase
     .from("collection_members")
     .select("status")
     .eq("id", memberId)
+    .eq("collection_id", collectionId)
     .single();
-  if (member && member.status !== "unpaid") {
+  if (!member) return { error: "Deltagaren hittades inte." };
+  if (member.status !== "unpaid") {
     revalidateCollectionViews(collectionId, teamId);
     return { error: "Personen är redan rapporterad eller bekräftad som betald." };
   }

@@ -157,12 +157,16 @@ export async function updateRosterMember(
   const trimmed = name.trim();
   if (!trimmed) return { error: "Namn är obligatoriskt." };
 
-  const { error } = await supabase
+  // Scope by team too — the role check above only covers teamId.
+  const { data: updated, error } = await supabase
     .from("roster_members")
     .update({ name: trimmed, phone: phone?.trim() || null })
-    .eq("id", id);
+    .eq("id", id)
+    .eq("team_id", teamId)
+    .select("id");
 
   if (error) return { error: "Kunde inte spara ändringen. Försök igen." };
+  if (!updated?.length) return { error: "Personen hittades inte." };
 
   revalidatePath(`/teams/${teamId}`);
   return { error: null };
@@ -180,7 +184,12 @@ export async function deleteRosterMember(
   ]);
   if (authError) return { error: authError };
 
-  const { error } = await supabase.from("roster_members").delete().eq("id", id);
+  // Scope by team too — the role check above only covers teamId.
+  const { error } = await supabase
+    .from("roster_members")
+    .delete()
+    .eq("id", id)
+    .eq("team_id", teamId);
   if (error) return { error: "Kunde inte ta bort personen. Försök igen." };
 
   revalidatePath(`/teams/${teamId}`);
